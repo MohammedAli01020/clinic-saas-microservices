@@ -1,0 +1,53 @@
+# spring.application.name=auth-service
+
+server:
+  port: 9200
+
+spring:
+  application:
+    name: auth-service
+#  main:
+#    allow-circular-references: true
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:clinic_auth}?createDatabaseIfNotExist=true&serverTimezone=UTC
+    username: ${DB_USER:root}
+    password: ${DB_PASS:root}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092, localhost:9093}
+    consumer:
+      group-id: auth-service-group
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: 'com.clinic.*'
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    listener:
+      concurrency: 2
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+
+app:
+  jwt:
+    issuer: clinic-auth
+    access-exp-minutes: ${JWT_ACCESS_MIN:15}
+    refresh-exp-days: ${JWT_REFRESH_DAYS:30}
+    private-key: "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC1wnzPMIf9ducVqTBDqZuWD0v7wLmV5oiUprgBHAqdYV+nEGtI4oqLhmJP6QbtDn2BvCEQJFJ752Sj0p5uFeqUSx9PEpTb59KYVNwpWb6Mm7Hx/Vx8fEDCAU37ZVBXJrQBGbLaSQ9ksqc7pofhFNjCVayquGY2EwxHk6YnjTzZ6tz7Xq5TkKwG6lUonQv/7FBmi02QB3BR5KdHovQfLn8r4J+Gz2C0BSnfNJv7aiwqH1yQNQ/fx531poswcY6N0BcxYatNIYZySm3X/YDv2EnK6PCJJTtK28VAVylLWrQFsTdxLFuarXgpZFYD+ke4TcLbs9SXmovOrtXNq4Bm1OR3AgMBAAECggEAALG9UjjVWbIIEbe4ySTdzI2Xqbx7D39z04ZzQEn+B1adnFp3+ZzwAAU+Lixov1vaARbJ77Os7SnfWQNokasSzaH8FibljvWLwRorqg4toYzjmC/7a5f1BZtjXKM3AZek9pbTYMqlmCJMc5/Gw/Dmgl/i68z02X2al30L5upovWYoDQwYq1kpVtw8Gn4LMQMFPnvCpiNApFy/76/eD4i9AKhv86K4/ZdDKW7Pxp3iwa1DJ3LD3NQZAkeTN6kZrQSH7zZ/mQCvwAWIIZkzjCI+Hi/B15NtDZWkZR/LeTg87owVRhR9ZaJcQ6Iua2CwvW1jr/XAUI+3PnTPkQ/PDYMBRQKBgQDomP2U8uC6GarnENDE2v9XvIOj4/BQVQPzvmfSkBN2DOB2MADgraktBiwHBhIs61i4dhO6AvGAoAJ3BV4zTsaJVmxHgjMMdxnW51V07ylUUihbKI3JWkBKzNd4ME71a05QrlUlporEN+jR/xId7a8nnf79Giazbu7x/E349d4DZQKBgQDIDBEW3h53uURwOEJkl1D+4cCQEyE055Wo8HoGrVipvtYRIxvCgKQQ1PhhpK+8gSZfImYUHivzoSbX5w5yNxNFsdWlGflBB3OFJOy3Q87IKOY36LK/Dftvw/QfgGVzvMKH4xeIGctwp7fqpj6LQ43o66b2m5kmzUD4+32EguwgqwKBgDIzux+n4EsqeRGQNo8WeWA1ZvA7pUWhY836/aubvyeOle/MYpQbx1TZbS1C6S9ayHZfvdg7BGbvojiQJwnJ6d4AkjRI7L23AxO4MGChsfjqFp2+PgQEf7XlSmg9fP1JYMjXJ7eNn4vESXLxq7Zb858IYd29BDdcLSR7gVTHtFhlAoGBAIGHpq0a57l34cOT+hFuFQjkni3r5Q1/gl1gUHLwXT+UDMIN7JSVfSZU7/sxioTRT0o8WMJgAu9+gks8FhOIa9ct3ftIhSdBLuCgVxIXOtZJ/T9oUgz5fbwRsomPNqGpMICSX5NFuH/aaXDrcgX0mPefVn3JpHIGZzKQjOZ3a3N/AoGAPiJkwu3tEuchYaMyWoc15Fxuj5syl+ppEXlow9wlNzjNLYjxbl96c9SeLMCL74QYjZKu2XIZHnWOJR3EZm0oSp2agrmQK3j4er1v77kTmJZuKwoLCQL//x7qCe3OMpq8AIxj4JAvKYjCK8JpbAb61DD8dvQkFZ+FqcMwfHnKR4A"
+
+
+
+#    private-key-path: ${JWT_PRIVATE_KEY_PATH:classpath:keys/private.pem}
+#    public-key-path: ${JWT_PUBLIC_KEY_PATH:classpath:keys/public.pem}

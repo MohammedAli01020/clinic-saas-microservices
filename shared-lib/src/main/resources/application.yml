@@ -1,0 +1,18 @@
+security:
+  jwt:
+    public-key: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtcJ8zzCH/XbnFakwQ6mblg9L+8C5leaIlKa4ARwKnWFfpxBrSOKKi4ZiT+kG7Q59gbwhECRSe+dko9KebhXqlEsfTxKU2+fSmFTcKVm+jJux8f1cfHxAwgFN+2VQVya0ARmy2kkPZLKnO6aH4RTYwlWsqrhmNhMMR5OmJ4082erc+16uU5CsBupVKJ0L/+xQZotNkAdwUeSnR6L0Hy5/K+Cfhs9gtAUp3zSb+2osKh9ckDUP38ed9aaLMHGOjdAXMWGrTSGGckpt1/2A79hJyujwiSU7StvFQFcpS1q0BbE3cSxbmq14KWRWA/pHuE3C27PUl5qLzq7VzauAZtTkdwIDAQAB"
+
+#    public-key: |
+#      -----BEGIN PUBLIC KEY-----
+#      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtcJ8zzCH/XbnFakwQ6mb
+#      lg9L+8C5leaIlKa4ARwKnWFfpxBrSOKKi4ZiT+kG7Q59gbwhECRSe+dko9KebhXq
+#      lEsfTxKU2+fSmFTcKVm+jJux8f1cfHxAwgFN+2VQVya0ARmy2kkPZLKnO6aH4RTY
+#      wlWsqrhmNhMMR5OmJ4082erc+16uU5CsBupVKJ0L/+xQZotNkAdwUeSnR6L0Hy5/
+#      K+Cfhs9gtAUp3zSb+2osKh9ckDUP38ed9aaLMHGOjdAXMWGrTSGGckpt1/2A79hJ
+#      yujwiSU7StvFQFcpS1q0BbE3cSxbmq14KWRWA/pHuE3C27PUl5qLzq7VzauAZtTk
+#      dwIDAQAB
+#      -----END PUBLIC KEY-----
+
+
+#    private-key: ${JWT_PRIVATE_KEY}
+#    public-key: ${JWT_PUBLIC_KEY}
