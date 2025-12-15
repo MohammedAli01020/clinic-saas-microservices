@@ -1,7 +1,6 @@
 package com.clinic.authservice.security;
 
 import com.clinic.authservice.repository.UserRepository;
-import com.clinic.sharedlib.jwt.JwtUserInfo;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

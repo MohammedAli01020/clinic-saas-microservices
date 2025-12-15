@@ -1,5 +1,6 @@
-package com.clinic.sharedlib.jwt;
+package com.clinic.gatewayservice;
 
+import com.clinic.sharedlib.jwt.UserInfo;
 import io.jsonwebtoken.*;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,8 +35,6 @@ public class JwtUtils {
     @PostConstruct
     public void init() throws Exception {
 
-//        String pubPem = Files.readString(java.nio.file.Path.of(publicKeyPath), StandardCharsets.UTF_8);
-
         if (publicKey != null && !publicKey.isBlank()) {
             publicKeyK = parsePublicKey(publicKey);
         }
@@ -43,53 +42,49 @@ public class JwtUtils {
 
 
     public Jws<Claims> parseWithPublicKey(String token) {
-        return Jwts.parser().setSigningKey(publicKeyK).build().parseClaimsJws(
-                token);
+
+        return Jwts.parserBuilder()
+                .setSigningKey(publicKeyK)
+                .build()
+                .parseClaimsJws(token);
+
     }
 
 
-    public JwtUserInfo parseTokenAuto(String token) {
+    public UserInfo parseTokenAuto(String token) {
         Jws<Claims> parsed = parseWithPublicKey(token);
         return toUserInfo(parsed);
     }
 
     public boolean validateJwtToken(String token) {
         try {
-            Jwts.parser()
-                    .verifyWith(publicKeyK)
+            Jwts.parserBuilder()
+                    .setSigningKey(publicKeyK)
                     .build()
-                    .parseSignedClaims(token);
+                    .parseClaimsJws(token);
             return true;
         } catch (JwtException ex) {
             return false;
         }
+
     }
-
-//    private PublicKey parsePublicKey(String pem) throws Exception {
-//        pem = pem.replaceAll("-----BEGIN (.*)-----", "")
-//                .replaceAll("-----END (.*)----", "")
-//                .replaceAll("\\s", "");
-//        byte[] bytes = java.util.Base64.getDecoder().decode(pem);
-//        X509EncodedKeySpec ks = new X509EncodedKeySpec(bytes);
-//        KeyFactory kf = KeyFactory.getInstance("RSA");
-//        return kf.generatePublic(ks);
-//    }
-
 
     private PublicKey parsePublicKey(String key) throws Exception {
+
         String publicKeyPEM = key
-                .replace("\\n", "")
                 .replace("-----BEGIN PUBLIC KEY-----", "")
                 .replace("-----END PUBLIC KEY-----", "")
-                .trim();
-        byte[] encoded = Base64.getDecoder().decode(publicKeyPEM);
-        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encoded);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        return kf.generatePublic(keySpec);
+                .replaceAll("\\s+", "");
+
+
+        byte[] decoded = Base64.getDecoder().decode(publicKeyPEM);
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decoded);
+
+        return KeyFactory.getInstance("RSA").generatePublic(keySpec);
     }
 
 
-    public JwtUserInfo toUserInfo(Jws<Claims> parsed) {
+    public UserInfo toUserInfo(Jws<Claims> parsed) {
         Claims c = parsed.getBody();
         String userId = c.getSubject();
         String email = c.get("email", String.class);
@@ -107,7 +102,7 @@ public class JwtUtils {
                 c.getIssuedAt() != null ? c.getIssuedAt().toInstant() : Instant.EPOCH;
         Instant expires = c.getExpiration() != null ? c.getExpiration().toInstant()
                 : Instant.EPOCH;
-        return new JwtUserInfo(userId, email, tenant, roles, emailVerified, enabled,
+        return new UserInfo(userId, email, tenant, roles, emailVerified, enabled,
                 issued, expires);
     }
 }

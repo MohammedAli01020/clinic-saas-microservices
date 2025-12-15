@@ -1,7 +1,6 @@
 package com.clinic.gatewayservice;
 
-import com.clinic.sharedlib.jwt.JwtUserInfo;
-import com.clinic.sharedlib.jwt.JwtUtils;
+import com.clinic.sharedlib.jwt.UserInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -46,7 +45,7 @@ public class JwtAuthenticationFilter implements GlobalFilter {
         }
 
         // Pass current user info in headers to downstream services
-        JwtUserInfo user = jwtUtil.parseTokenAuto(token);
+        UserInfo user = jwtUtil.parseTokenAuto(token);
 
         try {
             String userInfoString = new ObjectMapper().writeValueAsString(user);
@@ -63,9 +62,9 @@ public class JwtAuthenticationFilter implements GlobalFilter {
     }
 
     private boolean isPublicPath(String path) {
-        return path.startsWith("api/auth/login") || path.startsWith("api/auth/signup") ||
-                path.startsWith("api/auth/refresh") || path.startsWith("api/auth/verify") ||
-                path.startsWith("api/auth/welcome") ||
+        return path.startsWith("/api/auth/login") || path.startsWith("/api/auth/signup") ||
+                path.startsWith("/api/auth/refresh") || path.startsWith("/api/auth/verify") ||
+                path.startsWith("/api/auth/welcome") ||
                 path.startsWith("/health") || path.startsWith("/actuator/health");
     }
 

@@ -2,7 +2,6 @@ package com.clinic.authservice.security;
 
 
 import com.clinic.authservice.domain.User;
-import com.clinic.sharedlib.jwt.JwtUserInfo;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,18 +12,18 @@ import java.util.stream.Collectors;
 
 public class CustomerUserDetailsImpl implements UserDetails {
 
-    private final User userInfo;
+    private final User currentUser;
 
-    public CustomerUserDetailsImpl(User userInfo) {
-        this.userInfo = userInfo;
+    public CustomerUserDetailsImpl(User currentUser) {
+        this.currentUser = currentUser;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (userInfo.getRoles() == null) {
+        if (currentUser.getRoles() == null) {
             return List.of();
         }
-        return userInfo.getRoles().stream()
+        return currentUser.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority(role.toString()))
                 .collect(Collectors.toList());
     }
@@ -32,12 +31,12 @@ public class CustomerUserDetailsImpl implements UserDetails {
     @Override
     public String getPassword() {
         // عادة الـ password لا يُخزن في UserInfo إذا جاي من JWT
-        return userInfo.getPasswordHash();
+        return currentUser.getPasswordHash();
     }
 
     @Override
     public String getUsername() {
-        return userInfo.getEmail();
+        return currentUser.getEmail();
     }
 
     @Override
@@ -57,19 +56,19 @@ public class CustomerUserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return userInfo.isEnabled();
+        return currentUser.isEnabled();
     }
 
     // إضافات لتسهيل الوصول للـ tenant و userId
     public String getTenantId() {
-        return userInfo.getTenantId();
+        return currentUser.getTenantId();
     }
 
     public Long getUserId() {
-        return userInfo.getId();
+        return currentUser.getId();
     }
 
     public User getUser() {
-        return userInfo;
+        return currentUser;
     }
 }

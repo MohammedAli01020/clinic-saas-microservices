@@ -5,8 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 @SpringBootApplication(scanBasePackages = {
-        "com.clinic.gatewayservice",
-        "com.clinic.sharedlib.jwt"
+        "com.clinic.gatewayservice"
 })
 @EnableDiscoveryClient
 public class GatewayServiceApplication {

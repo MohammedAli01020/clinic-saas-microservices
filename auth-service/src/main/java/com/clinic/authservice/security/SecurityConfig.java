@@ -27,8 +27,13 @@ public class SecurityConfig {
 
 
         http.csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("api/auth/welcome", "/api/auth/login", "/api/auth/signup", "/api/auth/verify", "/api/auth/refresh").permitAll()
+                        .requestMatchers("/api/auth/welcome",
+                                "/api/auth/login",
+                                "/api/auth/signup",
+                                "/api/auth/verify",
+                                "/api/auth/refresh").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter,

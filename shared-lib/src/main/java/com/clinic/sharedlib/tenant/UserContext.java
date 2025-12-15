@@ -1,19 +1,19 @@
 package com.clinic.sharedlib.tenant;
 
 
-import com.clinic.sharedlib.jwt.JwtUserInfo;
+import com.clinic.sharedlib.jwt.UserInfo;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 public class UserContext {
 
-    private static final ThreadLocal<JwtUserInfo> USER = new ThreadLocal<>();
+    private static final ThreadLocal<UserInfo> USER = new ThreadLocal<>();
 
-    public static void setUser(JwtUserInfo info) {
+    public static void setUser(UserInfo info) {
         USER.set(info);
     }
 
-    public static JwtUserInfo getUser() {
+    public static UserInfo getUser() {
         return USER.get();
     }
 
