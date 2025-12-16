@@ -11,6 +11,7 @@
         <option value="$PROJECT_DIR$/shared-lib/shared-core/pom.xml" />
         <option value="$PROJECT_DIR$/gateway/pom.xml" />
         <option value="$PROJECT_DIR$/gateway-service/pom.xml" />
+        <option value="$PROJECT_DIR$/shared-security/pom.xml" />
       </list>
     </option>
   </component>

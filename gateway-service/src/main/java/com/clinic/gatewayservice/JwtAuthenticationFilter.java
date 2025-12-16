@@ -1,11 +1,13 @@
 package com.clinic.gatewayservice;
 
 import com.clinic.sharedlib.jwt.UserInfo;
+import com.clinic.sharedlib.util.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -32,13 +34,24 @@ public class JwtAuthenticationFilter implements GlobalFilter {
             return chain.filter(exchange);
         }
 
-        List<String> authHeaders = exchange.getRequest().getHeaders().getOrEmpty("Authorization");
-        if (authHeaders.isEmpty() || !authHeaders.get(0).startsWith("Bearer ")) {
+
+
+
+//        List<String> authHeaders = exchange.getRequest().getHeaders().getOrEmpty("Authorization");
+//        if (authHeaders.isEmpty() || !authHeaders.get(0).startsWith("Bearer ")) {
+//            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+//            return exchange.getResponse().setComplete();
+//        }
+//
+//        String token = authHeaders.get(0).substring(7);
+
+        // استخراج الـ token من Header أو Cookie
+        String token = extractToken(exchange);
+        if (token == null || !jwtUtil.validateJwtToken(token)) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
-        String token = authHeaders.get(0).substring(7);
         if (!jwtUtil.validateJwtToken(token)) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
@@ -48,12 +61,12 @@ public class JwtAuthenticationFilter implements GlobalFilter {
         UserInfo user = jwtUtil.parseTokenAuto(token);
 
         try {
-            String userInfoString = new ObjectMapper().writeValueAsString(user);
+            String userInfoString = JsonUtils.toJson(user);
             exchange.getRequest().mutate()
-                    .header("current-user", userInfoString)
+                    .header("X-Current-User", userInfoString)
                     .build();
 
-        } catch (JsonProcessingException e) {
+        } catch (RuntimeException e) {
             throw new RuntimeException("JsonProcessingException");
         }
 
@@ -68,4 +81,21 @@ public class JwtAuthenticationFilter implements GlobalFilter {
                 path.startsWith("/health") || path.startsWith("/actuator/health");
     }
 
+
+    private String extractToken(ServerWebExchange exchange) {
+        List<String> authHeaders = exchange.getRequest().getHeaders().getOrEmpty("Authorization");
+        if (!authHeaders.isEmpty() && authHeaders.get(0).startsWith("Bearer ")) {
+            return authHeaders.get(0).substring(7);
+        }
+
+        // البحث في Cookies
+        if (!exchange.getRequest().getCookies().isEmpty()) {
+            HttpCookie cookie = exchange.getRequest().getCookies().getFirst("access_token");
+            if (cookie != null) {
+                return cookie.getValue();
+            }
+        }
+
+        return null;
+    }
 }

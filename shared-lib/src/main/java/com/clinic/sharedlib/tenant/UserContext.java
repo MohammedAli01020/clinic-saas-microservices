@@ -21,12 +21,13 @@ public class UserContext {
         USER.remove();
     }
 
-    public static String getCurrentUserId () {
+    public static String getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (auth == null) return null;
+        if (auth != null && auth.getPrincipal() instanceof UserInfo) return
+                ((UserInfo) auth.getPrincipal()).userId();
 
-        return auth.getName();
+        return null;
     }
 }
 

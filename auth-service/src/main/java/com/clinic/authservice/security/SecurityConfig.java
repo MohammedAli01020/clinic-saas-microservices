@@ -19,7 +19,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtFilter;
     private final UserRepository userRepository;
 
     @Bean
@@ -35,9 +34,9 @@ public class SecurityConfig {
                                 "/api/auth/verify",
                                 "/api/auth/refresh").permitAll()
                         .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtFilter,
-                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+                );
+//                .addFilterBefore(jwtFilter,
+//                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
         http.authenticationManager(authManager);
         return http.build();
