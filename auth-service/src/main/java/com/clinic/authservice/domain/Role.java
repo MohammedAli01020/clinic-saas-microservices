@@ -16,7 +16,10 @@ public class Role extends BaseEntity {
     @Column(name="tenant_id")
     private String tenantId;
 
-    @ManyToMany(mappedBy = "roles")
+//    @ManyToMany(mappedBy = "roles")
+//    private Set<User> users = new HashSet<>();
+
+    @OneToMany(mappedBy = "role")
     private Set<User> users = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -24,5 +27,8 @@ public class Role extends BaseEntity {
             joinColumns=@JoinColumn(name="role_id"),
             inverseJoinColumns=@JoinColumn(name="permission_id"))
     private Set<Permission> permissions = new HashSet<>();
+
+
+
 
 }

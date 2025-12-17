@@ -29,4 +29,4 @@ eureka:
 
 security:
   jwt:
-    public-key: ${JWT_PUBLIC_KEY}
+    public-key-pem: ${JWT_PUBLIC_KEY}

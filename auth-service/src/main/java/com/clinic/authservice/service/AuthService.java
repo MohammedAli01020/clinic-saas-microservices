@@ -1,6 +1,8 @@
 package com.clinic.authservice.service;
 
 
+import com.auth0.jwt.JWT;
+import com.clinic.authservice.domain.Permission;
 import com.clinic.authservice.domain.ProcessedEvent;
 import com.clinic.authservice.domain.RefreshToken;
 import com.clinic.authservice.domain.User;
@@ -21,6 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.*;
 import java.security.MessageDigest;
@@ -51,19 +55,34 @@ public class AuthService {
                 .emailVerified(false)
                 .build();
         // assign default role if exists
-        roleRepo.findByTenantId(req.getTenantId()).stream().filter(r -> r.getName().equals("PATIENT")).findFirst().ifPresent(u.getRoles()::add);
+
+        roleRepo.findByTenantId(req.getTenantId())
+                .stream()
+                .filter(r -> r.getName().equals("PATIENT"))
+                .findFirst()
+                .ifPresent(u::setRole);
+
         userRepo.save(u);
         // generate verification token and send event
-        String token = jwtService.generateRefreshToken(u.getId().toString()); // reuse refresh generation for verification token (or create separate short token)
-//        kafkaTemplate.send("email-verification", new EventModels.EmailVerificationEvent(u.getEmail(), token, u.getTenantId(), Instant.now()));
+        String token = jwtService.generateEmailVerificationToken(u.getId().toString()); // reuse refresh generation for verification token (or create separate short token)
+        kafkaTemplate.send("email-verification", new EventModels.EmailVerificationEvent(u.getEmail(), token, u.getTenantId(), Instant.now()));
     }
 
     public LoginResponse login(LoginRequest req, String device, String ip) {
         authManager.authenticate(new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword()));
         User user = userRepo.findByEmail(req.getEmail()).orElseThrow();
-        List<String> roles = new ArrayList<>();
-        user.getRoles().forEach(r -> roles.add(r.getName()));
-        String access = jwtService.generateAccessToken(user.getId().toString(), user.getTenantId(), roles);
+
+//        List<String> roles = new ArrayList<>();
+//        user.getRoles().forEach(r -> roles.add(r.getName()));
+
+        List<String> permissions = extractPermissions(user);
+
+        String access = jwtService.generateAccessToken(
+                user.getId().toString(),
+                user.getTenantId(),
+                user.getRole().getName(),
+                permissions);
+
         String refresh = jwtService.generateRefreshToken(user.getId().toString());
         // hash refresh
         String hash = sha256(refresh);
@@ -83,15 +102,21 @@ public class AuthService {
     @Transactional
     public LoginResponse refresh(String refreshTokenRaw) {
         // verify signature
-        jwtService.verify(refreshTokenRaw);
+        var decoded= jwtService.verify(refreshTokenRaw);
+        // ✅ check token type
+        if (!"refresh".equals(decoded.getClaim("type").asString())) {
+            throw new IllegalArgumentException("Not a refresh token");
+        }
+
         String hash = sha256(refreshTokenRaw);
         RefreshToken stored = refreshRepo.findByTokenHash(hash).orElseThrow(() -> new IllegalArgumentException("Invalid refresh"));
         if (stored.isRevoked() || stored.getExpiresAt().isBefore(Instant.now()))
             throw new IllegalArgumentException("Refresh expired or revoked");
         User user = stored.getUser();
-        List<String> roles = new ArrayList<>();
-        user.getRoles().forEach(r -> roles.add(r.getName()));
-        String access = jwtService.generateAccessToken(user.getId().toString(), user.getTenantId(), roles);
+
+        List<String> permissions = extractPermissions(user);
+
+        String access = jwtService.generateAccessToken(user.getId().toString(), user.getTenantId(), user.getRole().getName(), permissions);
         // rotate refresh token -> issue new and revoke old
         String newRefresh = jwtService.generateRefreshToken(user.getId().toString());
         String newHash = sha256(newRefresh);
@@ -119,11 +144,19 @@ public class AuthService {
         });
     }
 
+
+
+
     @Transactional
     public boolean verifyEmail(String token) {
         try {
-            jwtService.verify(token);
-            var decoded = jwtService.decode(token);
+            var decoded = jwtService.verify(token);
+//            var decoded = jwtService.decode(token);
+
+            if (!"email_verification".equals(decoded.getClaim("type").asString())) {
+                throw new IllegalArgumentException("Invalid token type");
+            }
+
             String userId = decoded.getSubject();
             User u = userRepo.findById(Long.valueOf(userId)).orElseThrow();
             u.setEmailVerified(true);
@@ -161,17 +194,25 @@ public class AuthService {
     private String sha256(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] h = md.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : h) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
+            byte[] hash = md.digest(input.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new RuntimeException("SHA-256 not supported", ex);
         }
     }
+
+
+    private List<String> extractPermissions(User user) {
+        if (user.getRole() == null || user.getRole().getPermissions() == null) {
+            return List.of();
+        }
+
+        return user.getRole()
+                .getPermissions()
+                .stream()
+                .map(Permission::getName)
+                .toList();
+    }
+
 }
 

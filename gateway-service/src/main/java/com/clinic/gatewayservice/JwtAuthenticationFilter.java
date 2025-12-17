@@ -2,8 +2,6 @@ package com.clinic.gatewayservice;
 
 import com.clinic.sharedlib.jwt.UserInfo;
 import com.clinic.sharedlib.util.JsonUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.annotation.Order;
@@ -35,16 +33,6 @@ public class JwtAuthenticationFilter implements GlobalFilter {
         }
 
 
-
-
-//        List<String> authHeaders = exchange.getRequest().getHeaders().getOrEmpty("Authorization");
-//        if (authHeaders.isEmpty() || !authHeaders.get(0).startsWith("Bearer ")) {
-//            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-//            return exchange.getResponse().setComplete();
-//        }
-//
-//        String token = authHeaders.get(0).substring(7);
-
         // استخراج الـ token من Header أو Cookie
         String token = extractToken(exchange);
         if (token == null || !jwtUtil.validateJwtToken(token)) {
@@ -59,6 +47,14 @@ public class JwtAuthenticationFilter implements GlobalFilter {
 
         // Pass current user info in headers to downstream services
         UserInfo user = jwtUtil.parseTokenAuto(token);
+
+        // تحقق من type
+        String tokenType = jwtUtil.getClaim(token, "type"); // هتحتاج تضيف method في JwtUtils
+        if (!"access".equals(tokenType)) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
+        }
+
 
         try {
             String userInfoString = JsonUtils.toJson(user);

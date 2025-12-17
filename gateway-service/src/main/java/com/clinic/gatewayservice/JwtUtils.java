@@ -27,16 +27,16 @@ import java.util.Set;
 public class JwtUtils {
 
     @Value("${security.jwt.public-key}")
-    private String publicKey;
+    private String publicKeyPem;
 
-    private PublicKey publicKeyK;
+    private PublicKey publicKey;
 
 
     @PostConstruct
     public void init() throws Exception {
 
-        if (publicKey != null && !publicKey.isBlank()) {
-            publicKeyK = parsePublicKey(publicKey);
+        if (publicKeyPem != null && !publicKeyPem.isBlank()) {
+            publicKey = parsePublicKey(publicKeyPem);
         }
     }
 
@@ -44,7 +44,7 @@ public class JwtUtils {
     public Jws<Claims> parseWithPublicKey(String token) {
 
         return Jwts.parserBuilder()
-                .setSigningKey(publicKeyK)
+                .setSigningKey(publicKey)
                 .build()
                 .parseClaimsJws(token);
 
@@ -59,7 +59,7 @@ public class JwtUtils {
     public boolean validateJwtToken(String token) {
         try {
             Jwts.parserBuilder()
-                    .setSigningKey(publicKeyK)
+                    .setSigningKey(publicKey)
                     .build()
                     .parseClaimsJws(token);
             return true;
@@ -81,6 +81,10 @@ public class JwtUtils {
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decoded);
 
         return KeyFactory.getInstance("RSA").generatePublic(keySpec);
+    }
+
+    public String getClaim(String token, String claimName) {
+        return parseWithPublicKey(token).getBody().get(claimName, String.class);
     }
 
 

@@ -20,12 +20,21 @@ public class CustomerUserDetailsImpl implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (currentUser.getRoles() == null) {
+
+        if (currentUser.getRole() == null) {
             return List.of();
         }
-        return currentUser.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.toString()))
-                .collect(Collectors.toList());
+
+        return List.of(
+                new SimpleGrantedAuthority("ROLE_" + currentUser.getRole().getName())
+        );
+
+//        if (currentUser.getRoles() == null) {
+//            return List.of();
+//        }
+//        return currentUser.getRoles().stream()
+//                .map(role -> new SimpleGrantedAuthority(role.toString()))
+//                .collect(Collectors.toList());
     }
 
     @Override
@@ -59,7 +68,8 @@ public class CustomerUserDetailsImpl implements UserDetails {
         return currentUser.isEnabled();
     }
 
-    // إضافات لتسهيل الوصول للـ tenant و userId
+    // ========= Helpers =========
+
     public String getTenantId() {
         return currentUser.getTenantId();
     }

@@ -1,10 +1,9 @@
 package com.clinic.authservice.controller;
 
 
-
 import com.clinic.authservice.dto.LoginRequest;
-import com.clinic.authservice.dto.LoginResponse;
 import com.clinic.authservice.dto.SignupRequest;
+import com.clinic.authservice.security.JwtService;
 import com.clinic.authservice.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,6 +12,7 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -20,62 +20,122 @@ import java.time.Duration;
 public class AuthController {
 
     private final AuthService authService;
-    private final long refreshMaxAgeSec = Duration.ofDays(30).getSeconds(); // sync with JWT config or inject
+    private final JwtService jwtService;
+    private final long refreshMaxAgeSec = Duration.ofDays(30).getSeconds();
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody SignupRequest req) {
+    public ResponseEntity<Map<String, Object>> signup(@RequestBody SignupRequest req) {
         authService.signup(req);
-        return ResponseEntity.accepted().build();
+        return ResponseEntity.accepted().body(Map.of(
+                "status", "success",
+                "message", "Signup successful, please verify your email"
+        ));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest req, HttpServletResponse resp, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequest req,
+                                                     HttpServletResponse resp,
+                                                     HttpServletRequest request) {
         String device = request.getHeader("User-Agent");
         String ip = request.getRemoteAddr();
         var res = authService.login(req, device, ip);
-        // set HttpOnly secure cookie for refresh token
+
+        // set HttpOnly secure refresh cookie
         ResponseCookie cookie = ResponseCookie.from("refresh_token", res.getRefreshToken())
                 .httpOnly(true)
                 .secure(true)
-                .path("/api/auth/refresh")
+                .path("/api/auth")
                 .maxAge(refreshMaxAgeSec)
                 .sameSite("Strict")
                 .build();
-        resp.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        // return access token in body
-        return ResponseEntity.ok(new LoginResponse(res.getAccessToken(), null, res.getTenantId()));
+        resp.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        resp.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
+        resp.setHeader(HttpHeaders.PRAGMA, "no-cache");
+
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "accessToken", res.getAccessToken(),
+                "tenantId", res.getTenantId()
+        ));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<LoginResponse> refresh(@CookieValue(name = "refresh_token", required = false) String refreshCookie, HttpServletResponse resp) {
-        if (refreshCookie == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    public ResponseEntity<Map<String, Object>> refresh(@CookieValue(name = "refresh_token", required = false) String refreshCookie,
+                                                       HttpServletResponse resp) {
+        if (refreshCookie == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "status", "error",
+                    "message", "Missing refresh token"
+            ));
+        }
+
+        var decoded = jwtService.verify(refreshCookie);
+        if (!"refresh".equals(decoded.getClaim("type").asString())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "status", "error",
+                    "message", "Invalid token type"
+            ));
+        }
+
         var res = authService.refresh(refreshCookie);
-        // set rotated cookie
+
         ResponseCookie cookie = ResponseCookie.from("refresh_token", res.getRefreshToken())
                 .httpOnly(true)
                 .secure(true)
-                .path("/api/auth/refresh")
+                .path("/api/auth")
                 .maxAge(refreshMaxAgeSec)
                 .sameSite("Strict")
                 .build();
+
         resp.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return ResponseEntity.ok(new LoginResponse(res.getAccessToken(), null, res.getTenantId()));
+        resp.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
+        resp.setHeader(HttpHeaders.PRAGMA, "no-cache");
+
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "accessToken", res.getAccessToken(),
+                "tenantId", res.getTenantId()
+        ));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@CookieValue(name="refresh_token", required=false) String refreshCookie, HttpServletResponse resp) {
+    public ResponseEntity<Map<String, Object>> logout(@CookieValue(name = "refresh_token", required = false) String refreshCookie,
+                                                      HttpServletResponse resp) {
         if (refreshCookie != null) authService.logout(refreshCookie);
+
         // clear cookie
         ResponseCookie cookie = ResponseCookie.from("refresh_token", "")
-                .httpOnly(true).secure(true).path("/api/auth/refresh").maxAge(0).build();
+                .httpOnly(true)
+                .secure(true)
+                .path("/api/auth")
+                .maxAge(0)
+                .sameSite("Strict")
+                .build();
+
         resp.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return ResponseEntity.noContent().build();
+        resp.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
+        resp.setHeader(HttpHeaders.PRAGMA, "no-cache");
+
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Logged out successfully"
+        ));
     }
 
     @GetMapping("/verify")
-    public ResponseEntity<?> verify(@RequestParam("token") String token) {
-        boolean ok = authService.verifyEmail(token);
-        return ok ? ResponseEntity.ok().build() : ResponseEntity.badRequest().build();
+    public ResponseEntity<Map<String, Object>> verify(@RequestParam("token") String token) {
+        boolean verified = authService.verifyEmail(token);
+        if (verified) {
+            return ResponseEntity.ok(Map.of(
+                    "status", "success",
+                    "message", "Email verified"
+            ));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "error",
+                    "message", "Invalid or expired token"
+            ));
+        }
     }
 }
