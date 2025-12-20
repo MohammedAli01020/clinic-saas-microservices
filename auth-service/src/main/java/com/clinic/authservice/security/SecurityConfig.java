@@ -1,6 +1,6 @@
 package com.clinic.authservice.security;
 
-import com.clinic.authservice.repository.UserRepository;
+import com.clinic.authservice.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final UserRepository userRepository;
+    private final AuthUserRepository authUserRepository;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationManager authManager) throws Exception {
@@ -63,7 +63,7 @@ public class SecurityConfig {
 
     @Bean
     public CustomUserDetailService customUserDetailService() {
-        return new CustomUserDetailService(userRepository);
+        return new CustomUserDetailService(authUserRepository);
     }
 
 

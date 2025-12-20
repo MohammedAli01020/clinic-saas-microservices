@@ -1,51 +1,35 @@
 package com.clinic.authservice.security;
 
 
-import com.clinic.authservice.domain.User;
+import com.clinic.authservice.domain.AuthUser;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 public class CustomerUserDetailsImpl implements UserDetails {
 
-    private final User currentUser;
+    private final AuthUser authUser;
 
-    public CustomerUserDetailsImpl(User currentUser) {
-        this.currentUser = currentUser;
+    public CustomerUserDetailsImpl(AuthUser authUser) {
+        this.authUser = authUser;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-
-        if (currentUser.getRole() == null) {
-            return List.of();
-        }
-
-        return List.of(
-                new SimpleGrantedAuthority("ROLE_" + currentUser.getRole().getName())
-        );
-
-//        if (currentUser.getRoles() == null) {
-//            return List.of();
-//        }
-//        return currentUser.getRoles().stream()
-//                .map(role -> new SimpleGrantedAuthority(role.toString()))
-//                .collect(Collectors.toList());
+        // لا حاجة للـ roles هنا
+        return List.of();
     }
 
     @Override
     public String getPassword() {
-        // عادة الـ password لا يُخزن في UserInfo إذا جاي من JWT
-        return currentUser.getPasswordHash();
+        return authUser.getPasswordHash();
     }
 
     @Override
     public String getUsername() {
-        return currentUser.getEmail();
+        return authUser.getEmail();
     }
 
     @Override
@@ -65,20 +49,16 @@ public class CustomerUserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return currentUser.isEnabled();
+        return authUser.isEnabled();
     }
 
     // ========= Helpers =========
 
     public String getTenantId() {
-        return currentUser.getTenantId();
+        return authUser.getTenantId();
     }
 
     public Long getUserId() {
-        return currentUser.getId();
-    }
-
-    public User getUser() {
-        return currentUser;
+        return authUser.getId();
     }
 }

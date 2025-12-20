@@ -17,14 +17,14 @@ public class TenantCreatedListener {
 
     private final AuthService authService;
 
-    @KafkaListener(topics = "tenant-created", groupId = "auth-service-group", concurrency = "2")
-    public void onTenantCreated(EventModels.TenantCreatedEvent event) {
-        log.info("Received tenant-created: {}", event.getTenantId());
-        try {
-            authService.createAdminFromTenant(event.getTenantId(), event.getOwnerEmail(), event.getCorrelationId());
-        } catch (Exception ex) {
-            log.error("Failed onboarding: {}", ex.getMessage(), ex);
-            throw ex; // allow retry / DLQ
-        }
-    }
+//    @KafkaListener(topics = "tenant-created", groupId = "auth-service-group", concurrency = "2")
+//    public void onTenantCreated(EventModels.TenantCreatedEvent event) {
+//        log.info("Received tenant-created: {}", event.getTenantId());
+//        try {
+//            authService.createAdminFromTenant(event.getTenantId(), event.getOwnerEmail(), event.getCorrelationId());
+//        } catch (Exception ex) {
+//            log.error("Failed onboarding: {}", ex.getMessage(), ex);
+//            throw ex; // allow retry / DLQ
+//        }
+//    }
 }

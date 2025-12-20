@@ -15,12 +15,13 @@
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
         </processorPath>
-        <module name="shared-security" />
-        <module name="shared-lib" />
         <module name="auth-service" />
         <module name="tenant-service" />
-        <module name="eureka-server" />
         <module name="gateway-service" />
+        <module name="user-management-service" />
+        <module name="shared-security" />
+        <module name="shared-lib" />
+        <module name="eureka-server" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -38,6 +39,7 @@
       <module name="shared-lib" options="" />
       <module name="shared-security" options="" />
       <module name="tenant-service" options="" />
+      <module name="user-management-service" options="" />
     </option>
   </component>
 </project>

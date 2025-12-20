@@ -8,7 +8,7 @@ import java.time.Instant;
 @Entity
 @Table(name = "refresh_tokens")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class RefreshToken extends BaseEntity {
+public class RefreshToken {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -16,9 +16,9 @@ public class RefreshToken extends BaseEntity {
     @Column(name="token_hash", length=512)
     private String tokenHash;
 
-    @ManyToOne
-    @JoinColumn(name="user_id")
-    private User user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private AuthUser user;
 
     private String device;
     private String ip;
