@@ -1,6 +1,6 @@
 package com.clinic.gatewayservice;
 
-import com.clinic.sharedlib.jwt.UserInfo;
+import com.clinic.sharedlib.jwt.CurrentUser;
 import io.jsonwebtoken.*;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,7 +51,7 @@ public class JwtUtils {
     }
 
 
-    public UserInfo parseTokenAuto(String token) {
+    public CurrentUser parseTokenAuto(String token) {
         Jws<Claims> parsed = parseWithPublicKey(token);
         return toUserInfo(parsed);
     }
@@ -88,7 +88,7 @@ public class JwtUtils {
     }
 
 
-    public UserInfo toUserInfo(Jws<Claims> parsed) {
+    public CurrentUser toUserInfo(Jws<Claims> parsed) {
         Claims c = parsed.getBody();
         String userId = c.getSubject();
         String email = c.get("email", String.class);
@@ -106,7 +106,7 @@ public class JwtUtils {
                 c.getIssuedAt() != null ? c.getIssuedAt().toInstant() : Instant.EPOCH;
         Instant expires = c.getExpiration() != null ? c.getExpiration().toInstant()
                 : Instant.EPOCH;
-        return new UserInfo(userId, email, tenant, roles, emailVerified, enabled,
+        return new CurrentUser(userId, email, tenant, roles, emailVerified, enabled,
                 issued, expires);
     }
 }

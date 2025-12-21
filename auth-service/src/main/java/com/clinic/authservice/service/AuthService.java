@@ -52,18 +52,18 @@ public class AuthService {
         if (userRepo.findByEmail(req.getEmail()).isPresent())
             throw new IllegalArgumentException("Email used");
 
-        AuthUser u = AuthUser.builder()
-                .email(req.getEmail())
-                .passwordHash(passwordEncoder.encode(req.getPassword()))
-                .tenantId(req.getTenantId())
-                .enabled(false)
-                .emailVerified(false)
-                .build();
+//        AuthUser u = AuthUser.builder()
+//                .email(req.getEmail())
+//                .passwordHash(passwordEncoder.encode(req.getPassword()))
+//                .tenantId(req.getTenantId())
+//                .enabled(false)
+//                .emailVerified(false)
+//                .build();
 
-        userRepo.save(u);
-
-        // Generate email verification token
-        String token = jwtService.generateEmailVerificationToken(u.getId().toString());
+//        userRepo.save(u);
+//
+//        // Generate email verification token
+//        String token = jwtService.generateEmailVerificationToken(u.getId().toString());
         // TODO: send token via Kafka/email
     }
 

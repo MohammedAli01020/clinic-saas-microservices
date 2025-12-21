@@ -1,6 +1,6 @@
 package com.clinic.gatewayservice;
 
-import com.clinic.sharedlib.jwt.UserInfo;
+import com.clinic.sharedlib.jwt.CurrentUser;
 import com.clinic.sharedlib.util.JsonUtils;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -46,7 +46,7 @@ public class JwtAuthenticationFilter implements GlobalFilter {
         }
 
         // Pass current user info in headers to downstream services
-        UserInfo user = jwtUtil.parseTokenAuto(token);
+        CurrentUser user = jwtUtil.parseTokenAuto(token);
 
         // تحقق من type
         String tokenType = jwtUtil.getClaim(token, "type"); // هتحتاج تضيف method في JwtUtils

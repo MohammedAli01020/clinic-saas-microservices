@@ -7,16 +7,14 @@ import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.ParamDef;
 
+
 import java.time.Instant;
 
 @MappedSuperclass
 @EntityListeners(AuditEntityListener.class)
-
-@FilterDef(
-        name = "tenantFilter",
-        parameters = @ParamDef(name = "tenantId", type = String.class)
-)
+@FilterDef(name = "tenantFilter", parameters = @ParamDef(name = "tenantId", type = String.class))
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
+@Filter(name = "deletedFilter", condition = "deleted = false")
 @Getter
 @Setter
 public abstract class BaseEntity {
@@ -40,4 +38,9 @@ public abstract class BaseEntity {
     @Column(name = "updated_by")
     protected String updatedBy;
 
+    @Column(name = "deleted", nullable = false)
+    protected boolean deleted = false;
+
+    @Version
+    private Long version; // Optimistic locking
 }
