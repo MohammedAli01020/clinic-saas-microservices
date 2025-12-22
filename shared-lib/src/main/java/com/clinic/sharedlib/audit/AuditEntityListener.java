@@ -30,10 +30,15 @@ public class AuditEntityListener {
 //        String tenantId = "system";
 
         if (auth != null && auth.getPrincipal() instanceof CurrentUser user) {
-            userId = user.userId();
-//            tenantId = user.tenantId();
+            if (user.serviceAccount()) {
+                // internal call
+                userId = "system"; // أو user.userId() لو تحب تسجيل الـ service account
+            } else {
+                // actual user
+                userId = user.userId();
+            }
         } else {
-            log.warn("No authenticated user found, defaulting to 'system'");
+            log.warn("No authenticated principal found, defaulting to 'system'");
         }
 
         if (isNew) {

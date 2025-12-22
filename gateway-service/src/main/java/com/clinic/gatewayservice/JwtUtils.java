@@ -106,8 +106,11 @@ public class JwtUtils {
                 c.getIssuedAt() != null ? c.getIssuedAt().toInstant() : Instant.EPOCH;
         Instant expires = c.getExpiration() != null ? c.getExpiration().toInstant()
                 : Instant.EPOCH;
+
+        boolean isService = c.get("type", Boolean.class);
+
         return new CurrentUser(userId, email, tenant, roles, emailVerified, enabled,
-                issued, expires);
+                issued, expires, isService);
     }
 }
 

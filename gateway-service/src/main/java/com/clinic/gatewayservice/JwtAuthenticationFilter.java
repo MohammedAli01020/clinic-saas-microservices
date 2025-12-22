@@ -2,6 +2,7 @@ package com.clinic.gatewayservice;
 
 import com.clinic.sharedlib.jwt.CurrentUser;
 import com.clinic.sharedlib.util.JsonUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.annotation.Order;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Component
 @Order(-1)
+@Slf4j
 public class JwtAuthenticationFilter implements GlobalFilter {
 
     private final JwtUtils jwtUtil;
@@ -40,20 +42,29 @@ public class JwtAuthenticationFilter implements GlobalFilter {
             return exchange.getResponse().setComplete();
         }
 
-        if (!jwtUtil.validateJwtToken(token)) {
+
+        // Pass current user info in headers to downstream services
+//        CurrentUser user = jwtUtil.parseTokenAuto(token);
+
+        // Pass current user info in headers to downstream services
+        CurrentUser user;
+        try {
+            user = jwtUtil.parseTokenAuto(token); // يحول الـ claims إلى CurrentUser
+        } catch (Exception e) {
+            log.error("Failed to parse JWT token", e);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
-        // Pass current user info in headers to downstream services
-        CurrentUser user = jwtUtil.parseTokenAuto(token);
 
         // تحقق من type
         String tokenType = jwtUtil.getClaim(token, "type"); // هتحتاج تضيف method في JwtUtils
-        if (!"access".equals(tokenType)) {
+        if (!"access".equals(tokenType) && !"internal".equals(tokenType)) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
+
+
 
 
         try {

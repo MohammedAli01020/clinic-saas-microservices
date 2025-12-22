@@ -10,8 +10,14 @@ import java.util.Set;
  * Use this to forward identity to services (or place in request context).
  */
 @Builder
-public record CurrentUser(String userId, String email, String tenantId,
-                          Set<String> roles, boolean emailVerified, boolean enabled,
-                          Instant issuedAt, Instant expiresAt) {
-
+public record CurrentUser(String userId,
+                          String email,
+                          String tenantId,
+                          Set<String> roles,
+                          boolean emailVerified,
+                          boolean enabled,
+                          Instant issuedAt,
+                          Instant expiresAt,
+                          boolean serviceAccount) {   // جديد
 }
+
