@@ -1,7 +1,7 @@
 package com.clinic.gatewayservice;
 
-import com.clinic.sharedlib.jwt.CurrentUser;
 import com.clinic.sharedlib.util.JsonUtils;
+import com.clinic.sharedsecurityjwt.CurrentUser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;

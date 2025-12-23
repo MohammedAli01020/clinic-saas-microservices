@@ -10,6 +10,8 @@
     <file url="file://$PROJECT_DIR$/shared-lib/shared-core/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/shared-lib/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/shared-lib/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/shared-security-jwt/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/shared-security-jwt/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/shared-security/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/shared-security/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tenant-service/src/main/java" charset="UTF-8" />

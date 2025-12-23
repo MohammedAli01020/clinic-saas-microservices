@@ -12,8 +12,6 @@ import java.time.Instant;
 @Slf4j
 public class AuditEntityListener {
 
-//    private static final Logger logger = LoggerFactory.getLogger(AuditEntityListener.class);
-
     @PrePersist
     public void prePersist(BaseEntity entity) {
         setAuditFields(entity, true);
@@ -43,7 +41,6 @@ public class AuditEntityListener {
 
         if (isNew) {
             entity.setCreatedBy(userId);
-//            entity.setTenantId(tenantId);
             entity.setCreatedAt(Instant.now());
         }
 

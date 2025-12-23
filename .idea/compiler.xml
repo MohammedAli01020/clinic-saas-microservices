@@ -16,6 +16,7 @@
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
         </processorPath>
         <module name="auth-service" />
+        <module name="shared-security-jwt" />
         <module name="tenant-service" />
         <module name="gateway-service" />
         <module name="user-management-service" />
@@ -38,6 +39,7 @@
       <module name="shared-core" options="-parameters" />
       <module name="shared-lib" options="" />
       <module name="shared-security" options="" />
+      <module name="shared-security-jwt" options="" />
       <module name="tenant-service" options="" />
       <module name="user-management-service" options="" />
     </option>
