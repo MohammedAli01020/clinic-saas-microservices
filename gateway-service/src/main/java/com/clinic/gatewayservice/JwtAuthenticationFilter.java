@@ -1,6 +1,6 @@
 package com.clinic.gatewayservice;
 
-import com.clinic.sharedlib.util.JsonUtils;
+import com.clinic.sharedinternaltokengen.InternalTokenGenerator;
 import com.clinic.sharedsecurityjwt.CurrentUser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -19,66 +19,46 @@ import java.util.List;
 @Slf4j
 public class JwtAuthenticationFilter implements GlobalFilter {
 
-    private final JwtUtils jwtUtil;
+    private final JwtUtils jwtUtils;
+    private final InternalTokenGenerator internalTokenGenerator;
 
-    public JwtAuthenticationFilter(JwtUtils jwtUtil) {
-        this.jwtUtil = jwtUtil;
+    public JwtAuthenticationFilter(JwtUtils jwtUtils,
+                                   InternalTokenGenerator internalTokenGenerator) {
+        this.jwtUtils = jwtUtils;
+        this.internalTokenGenerator = internalTokenGenerator;
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+
         String path = exchange.getRequest().getURI().getPath();
 
-        // Public paths
         if (isPublicPath(path)) {
             return chain.filter(exchange);
         }
 
-
-        // استخراج الـ token من Header أو Cookie
         String token = extractToken(exchange);
-        if (token == null || !jwtUtil.validateJwtToken(token)) {
+        if (token == null || !jwtUtils.validateJwtToken(token)) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
+        CurrentUser user = jwtUtils.parseTokenAuto(token);
 
-        // Pass current user info in headers to downstream services
-//        CurrentUser user = jwtUtil.parseTokenAuto(token);
-
-        // Pass current user info in headers to downstream services
-        CurrentUser user;
-        try {
-            user = jwtUtil.parseTokenAuto(token); // يحول الـ claims إلى CurrentUser
-        } catch (Exception e) {
-            log.error("Failed to parse JWT token", e);
+        String tokenType = jwtUtils.getClaim(token, "type");
+        if (!"access".equals(tokenType)) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
+        // 🔐 Generate internal JWT
+        String internalJwt = internalTokenGenerator.generate("gateway-service", "gateway-service", user);
 
-        // تحقق من type
-        String tokenType = jwtUtil.getClaim(token, "type"); // هتحتاج تضيف method في JwtUtils
-        if (!"access".equals(tokenType) && !"internal".equals(tokenType)) {
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
-        }
+        ServerWebExchange mutated = exchange.mutate()
+                .request(r -> r.header("X-Internal-Token", internalJwt))
+                .build();
 
-
-
-
-        try {
-            String userInfoString = JsonUtils.toJson(user);
-            exchange.getRequest().mutate()
-                    .header("X-Current-User", userInfoString)
-                    .build();
-
-        } catch (RuntimeException e) {
-            throw new RuntimeException("JsonProcessingException");
-        }
-
-
-        return chain.filter(exchange);
+        return chain.filter(mutated);
     }
 
     private boolean isPublicPath(String path) {

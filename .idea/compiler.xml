@@ -22,6 +22,7 @@
         <module name="user-management-service" />
         <module name="shared-security" />
         <module name="shared-lib" />
+        <module name="shared-internal-token-gen" />
         <module name="eureka-server" />
       </profile>
     </annotationProcessing>
@@ -37,6 +38,7 @@
       <module name="eureka-server (1) (com.cliinic)" options="" />
       <module name="gateway-service" options="" />
       <module name="shared-core" options="-parameters" />
+      <module name="shared-internal-token-gen" options="" />
       <module name="shared-lib" options="" />
       <module name="shared-security" options="" />
       <module name="shared-security-jwt" options="" />

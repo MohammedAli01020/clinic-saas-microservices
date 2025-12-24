@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import java.security.*;
 import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
 import java.security.spec.*;
 import java.time.Instant;
 import java.util.Base64;
@@ -23,9 +22,6 @@ public class JwtService {
 
     @Value("${app.jwt.private-key-pem}")
     private String privateKeyPem;
-
-    @Value("${app.jwt.public-key-pem}")
-    private String publicKeyPem;
 
     @Value("${app.jwt.issuer:clinic-auth}")
     private String issuer;
@@ -43,13 +39,8 @@ public class JwtService {
 
         try {
             PrivateKey privateKey = parsePrivateKey(privateKeyPem);
-            PublicKey publicKey = parsePublicKey(publicKeyPem);
 
-            if (publicKey == null || privateKey == null) {
-                throw new IllegalStateException("JWT keys are missing");
-            }
-
-            this.algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, (RSAPrivateKey) privateKey);
+            this.algorithm = Algorithm.RSA256(null, (RSAPrivateKey) privateKey);
             log.info("JWT Service initialized using RSA");
         } catch (Exception e) {
             throw new IllegalStateException("Failed to initialize JWT Service", e);
@@ -59,7 +50,9 @@ public class JwtService {
     public String generateAccessToken(
             String subjectId,
             String tenantId,
+            Boolean isEnabled,
             String role,
+
             List<String> permissions
     ) {
         Instant now = Instant.now();
@@ -68,8 +61,9 @@ public class JwtService {
                 .withSubject(subjectId)
                 .withIssuedAt(Date.from(now))
                 .withExpiresAt(Date.from(now.plusSeconds(accessExpMinutes * 60)))
-                .withClaim("tenant", tenantId)
+                .withClaim("tenantId", tenantId)
                 .withClaim("role", role)
+                .withClaim("isEnabled", isEnabled)
                 .withClaim("permissions", permissions)
                 .withClaim("type", "access")
                 .sign(algorithm);

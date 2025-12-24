@@ -30,3 +30,5 @@ eureka:
 security:
   jwt:
     public-key-pem: ${JWT_PUBLIC_KEY}
+    internal-private-key-pem: ${INTERNAL_JWT_PRIVATE_KEY}
+    internal-public-key-pem: ${INTERNAL_JWT_PUBLIC_KEY}

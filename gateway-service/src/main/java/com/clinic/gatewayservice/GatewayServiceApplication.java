@@ -5,7 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 @SpringBootApplication(scanBasePackages = {
-        "com.clinic.gatewayservice"
+        "com.clinic.gatewayservice",
+        "com.clinic.sharedinternaltokengen"
 })
 @EnableDiscoveryClient
 public class GatewayServiceApplication {

@@ -14,6 +14,7 @@
         <option value="$PROJECT_DIR$/shared-security/pom.xml" />
         <option value="$PROJECT_DIR$/user-management-service/pom.xml" />
         <option value="$PROJECT_DIR$/shared-security-jwt/pom.xml" />
+        <option value="$PROJECT_DIR$/shared-internal-token-gen/pom.xml" />
       </list>
     </option>
   </component>

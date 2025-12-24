@@ -1,6 +1,6 @@
 package com.clinic.sharedlib.audit;
 
-import com.clinic.sharedlib.jwt.CurrentUser;
+import com.clinic.sharedsecurityjwt.CurrentUser;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import lombok.extern.slf4j.Slf4j;

@@ -87,6 +87,7 @@ public class AuthService {
         String access = jwtService.generateAccessToken(
                 user.getId().toString(),
                 user.getTenantId(),
+                user.isEnabled(),
                 "USER",        // placeholder role
                 permissions
         );
@@ -145,6 +146,7 @@ public class AuthService {
         String access = jwtService.generateAccessToken(
                 user.getId().toString(),
                 user.getTenantId(),
+                user.isEnabled(),
                 "USER",
                 permissions
         );
@@ -233,196 +235,6 @@ public class AuthService {
 
 }
 
-
-////
-
-
-//@Service
-//@RequiredArgsConstructor
-//public class AuthService {
-//
-//    private final UserRepository userRepo;
-//    private final RoleRepository roleRepo;
-//    private final RefreshTokenRepository refreshRepo;
-//    private final ProcessedEventRepository processedRepo;
-//    private final PasswordEncoder passwordEncoder;
-//    private final AuthenticationManager authManager;
-//    private final JwtService jwtService;
-//    private final KafkaTemplate<String, Object> kafkaTemplate;
-//
-//
-//
-//    @Transactional
-//    public void signup(SignupRequest req) {
-//        if (userRepo.findByEmail(req.getEmail()).isPresent()) throw new IllegalArgumentException("Email used");
-//        User u = User.builder()
-//                .email(req.getEmail())
-//                .passwordHash(passwordEncoder.encode(req.getPassword()))
-//                .tenantId(req.getTenantId())
-//                .enabled(false)
-//                .emailVerified(false)
-//                .build();
-//        // assign default role if exists
-//
-//        roleRepo.findByTenantId(req.getTenantId())
-//                .stream()
-//                .filter(r -> r.getName().equals("PATIENT"))
-//                .findFirst()
-//                .ifPresent(u::setRole);
-//
-//        userRepo.save(u);
-//        // generate verification token and send event
-//        String token = jwtService.generateEmailVerificationToken(u.getId().toString()); // reuse refresh generation for verification token (or create separate short token)
-//        kafkaTemplate.send("email-verification", new EventModels.EmailVerificationEvent(u.getEmail(), token, u.getTenantId(), Instant.now()));
-//    }
-//
-//    public LoginResponse login(LoginRequest req, String device, String ip) {
-//        authManager.authenticate(new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword()));
-//        User user = userRepo.findByEmail(req.getEmail()).orElseThrow();
-//
-////        List<String> roles = new ArrayList<>();
-////        user.getRoles().forEach(r -> roles.add(r.getName()));
-//
-//        List<String> permissions = extractPermissions(user);
-//
-//        String access = jwtService.generateAccessToken(
-//                user.getId().toString(),
-//                user.getTenantId(),
-//                user.getRole().getName(),
-//                permissions);
-//
-//        String refresh = jwtService.generateRefreshToken(user.getId().toString());
-//        // hash refresh
-//        String hash = sha256(refresh);
-//        RefreshToken rt = RefreshToken.builder()
-//                .tokenHash(hash)
-//                .user(user)
-//                .device(device)
-//                .ip(ip)
-//                .createdAt(Instant.now())
-//                .expiresAt(Instant.now().plusSeconds(jwtService.getRefreshExpirySeconds()))
-//                .revoked(false)
-//                .build();
-//        refreshRepo.save(rt);
-//        return new LoginResponse(access, refresh, user.getTenantId());
-//    }
-//
-//    @Transactional
-//    public LoginResponse refresh(String refreshTokenRaw) {
-//        // verify signature
-//        var decoded= jwtService.verify(refreshTokenRaw);
-//        // ✅ check token type
-//        if (!"refresh".equals(decoded.getClaim("type").asString())) {
-//            throw new IllegalArgumentException("Not a refresh token");
-//        }
-//
-//        String hash = sha256(refreshTokenRaw);
-//        RefreshToken stored = refreshRepo.findByTokenHash(hash).orElseThrow(() -> new IllegalArgumentException("Invalid refresh"));
-//        if (stored.isRevoked() || stored.getExpiresAt().isBefore(Instant.now()))
-//            throw new IllegalArgumentException("Refresh expired or revoked");
-//        User user = stored.getUser();
-//
-//        List<String> permissions = extractPermissions(user);
-//
-//        String access = jwtService.generateAccessToken(user.getId().toString(), user.getTenantId(), user.getRole().getName(), permissions);
-//        // rotate refresh token -> issue new and revoke old
-//        String newRefresh = jwtService.generateRefreshToken(user.getId().toString());
-//        String newHash = sha256(newRefresh);
-//        stored.setRevoked(true);
-//        refreshRepo.save(stored);
-//        RefreshToken rt = RefreshToken.builder()
-//                .tokenHash(newHash)
-//                .user(user)
-//                .device(stored.getDevice())
-//                .ip(stored.getIp())
-//                .createdAt(Instant.now())
-//                .expiresAt(Instant.now().plusSeconds(jwtService.getRefreshExpirySeconds()))
-//                .revoked(false)
-//                .build();
-//        refreshRepo.save(rt);
-//        return new LoginResponse(access, newRefresh, user.getTenantId());
-//    }
-//
-//    @Transactional
-//    public void logout(String refreshTokenRaw) {
-//        String hash = sha256(refreshTokenRaw);
-//        refreshRepo.findByTokenHash(hash).ifPresent(rt -> {
-//            rt.setRevoked(true);
-//            refreshRepo.save(rt);
-//        });
-//    }
-//
-//
-//
-//
-//    @Transactional
-//    public boolean verifyEmail(String token) {
-//        try {
-//            var decoded = jwtService.verify(token);
-////            var decoded = jwtService.decode(token);
-//
-//            if (!"email_verification".equals(decoded.getClaim("type").asString())) {
-//                throw new IllegalArgumentException("Invalid token type");
-//            }
-//
-//            String userId = decoded.getSubject();
-//            User u = userRepo.findById(Long.valueOf(userId)).orElseThrow();
-//            u.setEmailVerified(true);
-//            u.setEnabled(true);
-//            userRepo.save(u);
-//            return true;
-//        } catch (Exception e) {
-//            return false;
-//        }
-//    }
-//
-//    // used by onboarding listener
-//    @Transactional
-//    public void createAdminFromTenant(String tenantId, String ownerEmail, String correlationId) {
-//        String eventId = "tenant-created::" + tenantId;
-//        if (processedRepo.existsByEventId(eventId)) return;
-//        Optional<User> ex = userRepo.findByEmail(ownerEmail);
-//        if (ex.isPresent()) {
-//            User u = ex.get();
-//            u.setTenantId(tenantId);
-//            userRepo.save(u);
-//        } else {
-//            User u = User.builder()
-//                    .email(ownerEmail)
-//                    .passwordHash(passwordEncoder.encode(UUID.randomUUID().toString()))
-//                    .tenantId(tenantId)
-//                    .enabled(false)
-//                    .emailVerified(false)
-//                    .build();
-//            userRepo.save(u);
-//        }
-//        processedRepo.save(ProcessedEvent.builder().eventId(eventId).topic("tenant-created").build());
-//    }
-//
-//    private String sha256(String input) {
-//        try {
-//            MessageDigest md = MessageDigest.getInstance("SHA-256");
-//            byte[] hash = md.digest(input.getBytes(StandardCharsets.UTF_8));
-//            return HexFormat.of().formatHex(hash);
-//        } catch (NoSuchAlgorithmException ex) {
-//            throw new RuntimeException("SHA-256 not supported", ex);
-//        }
-//    }
-//
-//
-//    private List<String> extractPermissions(User user) {
-//        if (user.getRole() == null || user.getRole().getPermissions() == null) {
-//            return List.of();
-//        }
-//
-//        return user.getRole()
-//                .getPermissions()
-//                .stream()
-//                .map(Permission::getName)
-//                .toList();
-//    }
-//
-//}
 
 
 

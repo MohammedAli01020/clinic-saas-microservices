@@ -10,7 +10,9 @@ import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * JwtUtils: stateless helper to parse JWT (supports RS256 publicKey or HMAC
@@ -86,6 +88,24 @@ public class JwtUtils {
     }
 
 
+    @SuppressWarnings("unchecked")
+    private static Set<String> extractPermissions(Claims claims) {
+        Object roles = claims.get("permissions");
+
+        if (roles instanceof Collection<?> collection) {
+            return collection.stream()
+                    .map(String::valueOf)
+                    .collect(Collectors.toUnmodifiableSet());
+        }
+
+        return Set.of();
+    }
+
+    private static boolean isTrue(Claims claims, String key) {
+        return Boolean.TRUE.equals(claims.get(key, Boolean.class));
+    }
+
+
     public CurrentUser toUserInfo(Jws<Claims> parsed) {
         Claims claims = parsed.getBody();
 
@@ -94,36 +114,14 @@ public class JwtUtils {
                 claims.get("userId", String.class),
                 claims.get("email", String.class),
                 claims.get("tenantId", String.class),
-                Set.copyOf(claims.get("roles", Set.class)),
-                Boolean.TRUE.equals(claims.get("emailVerified", Boolean.class)),
-                Boolean.TRUE.equals(claims.get("enabled", Boolean.class)),
+                claims.get("role", String.class),
+                extractPermissions(claims),
+                isTrue(claims, "enabled"),
                 claims.getIssuedAt().toInstant(),
                 claims.getExpiration().toInstant(),
-                Boolean.TRUE.equals(claims.get("serviceAccount", Boolean.class))
-               );
+                isTrue(claims, "serviceAccount")
+        );
 
-
-//        String userId = c.getSubject();
-//        String email = c.get("email", String.class);
-//        String tenant = c.get("tenant") != null ? c.get("tenant", String.class)
-//                : c.get("tenantId", String.class);
-//        List<String> rolesList = c.get("roles", List.class);
-//        Set<String> roles = rolesList != null ? Set.copyOf(rolesList) : Set.of();
-//        boolean emailVerified = c.get("emailVerified", Boolean.class) != null
-//                ? c.get("emailVerified", Boolean.class)
-//                : false;
-//        boolean enabled = c.get("enabled", Boolean.class) != null
-//                ? c.get("enabled", Boolean.class)
-//                : true;
-//        Instant issued =
-//                c.getIssuedAt() != null ? c.getIssuedAt().toInstant() : Instant.EPOCH;
-//        Instant expires = c.getExpiration() != null ? c.getExpiration().toInstant()
-//                : Instant.EPOCH;
-//
-//        boolean isService = c.get("type", Boolean.class);
-//
-//        return new CurrentUser(userId, email, tenant, roles, emailVerified, enabled,
-//                issued, expires, isService);
     }
 }
 
