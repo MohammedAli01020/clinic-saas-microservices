@@ -52,7 +52,6 @@ public class JwtService {
             String tenantId,
             Boolean isEnabled,
             String role,
-
             List<String> permissions
     ) {
         Instant now = Instant.now();
@@ -65,7 +64,8 @@ public class JwtService {
                 .withClaim("role", role)
                 .withClaim("isEnabled", isEnabled)
                 .withClaim("permissions", permissions)
-                .withClaim("type", "access")
+                .withClaim("tokenType", "access")
+                .withClaim("principalType", "USER")
                 .sign(algorithm);
     }
 
@@ -77,7 +77,7 @@ public class JwtService {
                 .withSubject(subjectId)
                 .withIssuedAt(Date.from(now))
                 .withExpiresAt(Date.from(now.plusSeconds(15 * 60))) // 15 دقيقة
-                .withClaim("type", "email_verification")
+                .withClaim("tokenType", "email_verification")
                 .sign(algorithm);
     }
 
@@ -87,7 +87,7 @@ public class JwtService {
         return JWT.create()
                 .withIssuer(issuer)
                 .withSubject(subjectId)
-                .withClaim("type", "refresh")
+                .withClaim("tokenType", "refresh")
                 .withIssuedAt(Date.from(now))
                 .withExpiresAt(Date.from(now.plusSeconds(refreshExpDays * 86400)))
                 .sign(algorithm);

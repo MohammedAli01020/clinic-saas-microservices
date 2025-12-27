@@ -80,15 +80,15 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
 
-
         // Extract permissions from UserManagement or default empty
         List<String> permissions = List.of(); // placeholder
+        String role = "USER";
 
         String access = jwtService.generateAccessToken(
                 user.getId().toString(),
                 user.getTenantId(),
                 user.isEnabled(),
-                "USER",        // placeholder role
+                role,        // placeholder role
                 permissions
         );
 

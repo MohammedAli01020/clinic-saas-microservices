@@ -1,7 +1,7 @@
 package com.clinic.gatewayservice;
 
 import com.clinic.sharedinternaltokengen.InternalTokenGenerator;
-import com.clinic.sharedsecurityjwt.CurrentUser;
+import com.clinic.sharedsecurityjwt.UserPrincipal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -43,16 +43,16 @@ public class JwtAuthenticationFilter implements GlobalFilter {
             return exchange.getResponse().setComplete();
         }
 
-        CurrentUser user = jwtUtils.parseTokenAuto(token);
+        UserPrincipal user = jwtUtils.parseTokenAuto(token);
 
-        String tokenType = jwtUtils.getClaim(token, "type");
+        String tokenType = jwtUtils.getClaim(token, "tokenType");
         if (!"access".equals(tokenType)) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
         // 🔐 Generate internal JWT
-        String internalJwt = internalTokenGenerator.generate("gateway-service", "gateway-service", user);
+        String internalJwt = internalTokenGenerator.generate("gateway-service", user);
 
         ServerWebExchange mutated = exchange.mutate()
                 .request(r -> r.header("X-Internal-Token", internalJwt))

@@ -6,8 +6,8 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 @SpringBootApplication(scanBasePackages = {
         "com.clinic.authservice",     // الباكج الرئيسي
-        "com.clinic.sharedlib.jwt",    // الباكج اللي فيه JwtUtils
-        "com.clinic.sharedsecurity"
+//        "com.clinic.sharedlib.jwt",    // الباكج اللي فيه JwtUtils
+//        "com.clinic.sharedsecurity"
 })
 @EnableDiscoveryClient
 public class AuthServiceApplication {

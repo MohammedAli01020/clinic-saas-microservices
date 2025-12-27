@@ -1,6 +1,7 @@
 package com.clinic.gatewayservice;
 
-import com.clinic.sharedsecurityjwt.CurrentUser;
+import com.clinic.sharedsecurityjwt.PrincipalType;
+import com.clinic.sharedsecurityjwt.UserPrincipal;
 import io.jsonwebtoken.*;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,7 +52,7 @@ public class JwtUtils {
     }
 
 
-    public CurrentUser parseTokenAuto(String token) {
+    public UserPrincipal parseTokenAuto(String token) {
         Jws<Claims> parsed = parseWithPublicKey(token);
         return toUserInfo(parsed);
     }
@@ -87,17 +88,13 @@ public class JwtUtils {
         return parseWithPublicKey(token).getBody().get(claimName, String.class);
     }
 
-
     @SuppressWarnings("unchecked")
-    private static Set<String> extractPermissions(Claims claims) {
-        Object roles = claims.get("permissions");
-
-        if (roles instanceof Collection<?> collection) {
+    private static Set<String> extractSet(Object claim) {
+        if (claim instanceof Collection<?> collection) {
             return collection.stream()
                     .map(String::valueOf)
                     .collect(Collectors.toUnmodifiableSet());
         }
-
         return Set.of();
     }
 
@@ -106,21 +103,21 @@ public class JwtUtils {
     }
 
 
-    public CurrentUser toUserInfo(Jws<Claims> parsed) {
+    public UserPrincipal toUserInfo(Jws<Claims> parsed) {
         Claims claims = parsed.getBody();
 
-
-        return new CurrentUser (
-                claims.get("userId", String.class),
-                claims.get("email", String.class),
-                claims.get("tenantId", String.class),
-                claims.get("role", String.class),
-                extractPermissions(claims),
-                isTrue(claims, "enabled"),
-                claims.getIssuedAt().toInstant(),
-                claims.getExpiration().toInstant(),
-                isTrue(claims, "serviceAccount")
-        );
+        return UserPrincipal.builder()
+                .sub(claims.get("userId", String.class))
+                .iss(claims.getIssuer())
+                .email(claims.get("email", String.class))
+                .tenantId(claims.get("tenantId", String.class))
+                .role(claims.get("role", String.class))
+                .permissions(extractSet(claims.get("permissions")))
+                .isEnabled(isTrue(claims, "isEnabled"))
+                .issuedAt(claims.getIssuedAt().toInstant())
+                .expiresAt(claims.getExpiration().toInstant())
+                .principalType(PrincipalType.USER)
+                .build();
 
     }
 }
