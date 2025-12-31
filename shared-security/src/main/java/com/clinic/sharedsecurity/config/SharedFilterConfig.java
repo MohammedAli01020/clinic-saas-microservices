@@ -27,19 +27,19 @@ public class SharedFilterConfig {
     }
 
 
-    @Bean
-    public FilterRegistrationBean<JwtAuthenticationFilter> currentUserFilter(JwtAuthenticationFilter filter) {
-        FilterRegistrationBean<JwtAuthenticationFilter> registrationBean = new FilterRegistrationBean<>();
-        registrationBean.setFilter(filter);
-        registrationBean.setOrder(40); // ترتيب نسبي
-        return registrationBean;
-    }
-
-    @Bean
-    public FilterRegistrationBean<HibernateTenantFilter> hibernateTenantFilter(HibernateTenantFilter filter) {
-        FilterRegistrationBean<HibernateTenantFilter> registrationBean = new FilterRegistrationBean<>();
-        registrationBean.setFilter(filter);
-        registrationBean.setOrder(45);
-        return registrationBean;
-    }
+//    @Bean
+//    public FilterRegistrationBean<JwtAuthenticationFilter> currentUserFilter(JwtAuthenticationFilter filter) {
+//        FilterRegistrationBean<JwtAuthenticationFilter> registrationBean = new FilterRegistrationBean<>();
+//        registrationBean.setFilter(filter);
+//        registrationBean.setOrder(40); // ترتيب نسبي
+//        return registrationBean;
+//    }
+//
+//    @Bean
+//    public FilterRegistrationBean<HibernateTenantFilter> hibernateTenantFilter(HibernateTenantFilter filter) {
+//        FilterRegistrationBean<HibernateTenantFilter> registrationBean = new FilterRegistrationBean<>();
+//        registrationBean.setFilter(filter);
+//        registrationBean.setOrder(45);
+//        return registrationBean;
+//    }
 }

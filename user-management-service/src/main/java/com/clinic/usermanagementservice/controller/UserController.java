@@ -1,8 +1,8 @@
 package com.clinic.usermanagementservice.controller;
 
+import com.clinic.sharedsecurityjwt.UserPrincipal;
 import com.clinic.sharedsecurityjwt.annotation.CurrentUser;
 import com.clinic.usermanagementservice.domain.enmus.UserStatus;
-import com.clinic.usermanagementservice.dto.CreateUserRequest;
 import com.clinic.usermanagementservice.dto.UserResponse;
 import com.clinic.usermanagementservice.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class UserController {
 //    }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('user.read')")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
     public Page<UserResponse> search(
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String fullName,
@@ -35,8 +35,8 @@ public class UserController {
         return userService.searchUsers(email, fullName, status, pageable);
     }
 
-//    @GetMapping("/me")
-//    public UserResponse getCurrentUser(@CurrentUser com.clinic.sharedsecurityjwt.CurrentUser currentUser) {
-//        return userService.getCurrentUser(currentUser);
-//    }
+    @GetMapping("/me")
+    public UserResponse getCurrentUser(@CurrentUser UserPrincipal currentUser) {
+        return userService.getCurrentUser(currentUser);
+    }
 }

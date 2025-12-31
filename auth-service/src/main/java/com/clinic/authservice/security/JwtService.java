@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Component
 @Slf4j
@@ -52,7 +53,7 @@ public class JwtService {
             String tenantId,
             Boolean isEnabled,
             String role,
-            List<String> permissions
+            Set<String> permissions
     ) {
         Instant now = Instant.now();
         return JWT.create()
@@ -63,7 +64,7 @@ public class JwtService {
                 .withClaim("tenantId", tenantId)
                 .withClaim("role", role)
                 .withClaim("isEnabled", isEnabled)
-                .withClaim("permissions", permissions)
+                .withClaim("permissions", permissions.stream().toList())
                 .withClaim("tokenType", "access")
                 .withClaim("principalType", "USER")
                 .sign(algorithm);

@@ -1,26 +1,28 @@
 package com.clinic.sharedinternaltokengen;
 
+
 import com.clinic.sharedsecurityjwt.*;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
-
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Component
 public class InternalTokenVerifier {
 
     @Value("${app.jwt.internal-public-key-pem}")
-    private String publicKeyPem;
+    private String internalPublicKeyPem;
 
-    @Value("${app.service.name}")
+    @Value("${spring.application.name}")
     private String currentServiceName;
 
     private PublicKey publicKey;
@@ -35,7 +37,7 @@ public class InternalTokenVerifier {
     @PostConstruct
     public void init() {
         try {
-            publicKey = parsePublicKey(publicKeyPem);
+            publicKey = parsePublicKey(internalPublicKeyPem);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to initialize JWT Service", e);
         }
@@ -45,32 +47,52 @@ public class InternalTokenVerifier {
         return Boolean.TRUE.equals(claims.get(key, Boolean.class));
     }
 
-
     /**
      * Verify internal JWT token
-     * @param token JWT token
-     * @return SecurityPrincipal
      */
     public SecurityPrincipal verify(String token) {
+
         Claims claims = Jwts.parser()
                 .setSigningKey(publicKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
 
-        String type = claims.get("principalType", String.class);
-        if (type == null) throw new SecurityException("Missing token type");
-
+        // ───────────────── issuer ─────────────────
         String issuer = claims.getIssuer();
         if (!allowedIssuers.contains(issuer)) {
             throw new SecurityException("Unauthorized token issuer: " + issuer);
         }
 
+        // ───────────────── principal type ─────────────────
+        String type = claims.get("principalType", String.class);
+        if (type == null) {
+            throw new SecurityException("Missing token type");
+        }
+
+
+
+
+        // ───────────────── SERVICE token ─────────────────
         if (PrincipalType.SERVICE.name().equals(type)) {
+
+            // ───────────────── audience (FIX) ─────────────────
             String aud = claims.get("aud", String.class);
-            if (aud == null || !aud.equals(currentServiceName)) {
+
+//            String aud;
+//
+//            if (audClaim instanceof String s) {
+//                aud = s;
+//            } else if (audClaim instanceof Collection<?> c && !c.isEmpty()) {
+//                aud = c.iterator().next().toString();
+//            } else {
+//                throw new SecurityException("Invalid audience claim");
+//            }
+
+            if (aud != null && !aud.equals(currentServiceName)) {
                 throw new SecurityException("Token audience mismatch for service: " + currentServiceName);
             }
+
             return ServicePrincipal.builder()
                     .sub(claims.getSubject())
                     .scopes(extractSet(claims.get("scopes")))
@@ -82,7 +104,11 @@ public class InternalTokenVerifier {
                     .principalType(PrincipalType.SERVICE)
                     .build();
 
-        } else if (PrincipalType.USER.name().equals(type)) {
+        }
+
+        // ───────────────── USER token ─────────────────
+        if (PrincipalType.USER.name().equals(type)) {
+
             return UserPrincipal.builder()
                     .sub(claims.getSubject())
                     .role(claims.get("role", String.class))
@@ -95,10 +121,12 @@ public class InternalTokenVerifier {
                     .principalType(PrincipalType.USER)
                     .isEnabled(isTrue(claims, "isEnabled"))
                     .build();
-        } else {
-            throw new SecurityException("Unknown principal type: " + type);
         }
+
+        throw new SecurityException("Unknown principal type: " + type);
     }
+
+    // ───────────────── helpers ─────────────────
 
     @SuppressWarnings("unchecked")
     private static Set<String> extractSet(Object claim) {

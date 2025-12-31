@@ -1,4 +1,5 @@
-package com.clinic.usermanagementservice.dto;
+package com.clinic.authservice.dto;
+
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,8 +8,8 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class UserResponse {
     private Long id;
     private String email;

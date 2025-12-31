@@ -1,5 +1,7 @@
 package com.clinic.usermanagementservice.config;
 
+import com.clinic.sharedsecurity.filter.HibernateTenantFilter;
+import com.clinic.sharedsecurity.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
 @Configuration
@@ -16,6 +19,8 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final HibernateTenantFilter hibernateTenantFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -23,8 +28,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+
+                .addFilterAfter(hibernateTenantFilter, JwtAuthenticationFilter.class)
+
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/internal/**").hasRole("INTERNAL_SERVICE")
+                        .requestMatchers("/internal/**").authenticated()
                         .anyRequest().authenticated()
                 );
 

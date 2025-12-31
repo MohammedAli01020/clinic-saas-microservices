@@ -7,8 +7,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.experimental.SuperBuilder;
 
-@Builder
+@SuperBuilder
 @Entity
 @Getter
 @Setter

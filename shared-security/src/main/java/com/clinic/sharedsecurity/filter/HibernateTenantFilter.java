@@ -1,6 +1,6 @@
 package com.clinic.sharedsecurity.filter;
 
-import com.clinic.sharedsecurityjwt.CurrentUser;
+import com.clinic.sharedsecurityjwt.SecurityPrincipal;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.FilterChain;
@@ -29,13 +29,18 @@ public class HibernateTenantFilter extends OncePerRequestFilter {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication != null && authentication.getPrincipal() instanceof CurrentUser user) {
+        if (authentication != null && authentication.getPrincipal() instanceof SecurityPrincipal user) {
             String tenantId = user.tenantId();
 
             Session session = entityManager.unwrap(Session.class);
             if (session != null) {
                 session.enableFilter("tenantFilter").setParameter("tenantId", tenantId);
-                session.enableFilter("deletedFilter");
+
+//                try {
+//                      session.enableFilter("deletedFilter");
+//                } catch (Exception e) {
+//                    log.info("deletedFilter did not enabled!!");
+//                }
             }
 
             log.debug("TenantFilter applied for tenantId={}", tenantId);
@@ -46,7 +51,7 @@ public class HibernateTenantFilter extends OncePerRequestFilter {
                 // إغلاق الـ filters بعد الطلب
                 if (session != null) {
                     session.disableFilter("tenantFilter");
-                    session.disableFilter("deletedFilter");
+//                    session.disableFilter("deletedFilter");
                 }
             }
 

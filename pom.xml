@@ -41,6 +41,11 @@
         <module>shared-security</module>
         <module>tenant-service</module>
 
+        <module>user-management-service</module>
+        <module>shared-security-jwt</module>
+        <module>shared-internal-token-gen</module>
+
+
         <!--        <module>patient-service</module>-->
 <!--        <module>appointment-service</module>-->
     </modules>

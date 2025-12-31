@@ -20,10 +20,10 @@ import java.util.Date;
 public class InternalTokenGenerator {
 
     @Value("${app.jwt.internal-private-key-pem}")
-    private String privateKeyPem;
+    private String internalPrivateKeyPem;
 
 
-    @Value("${app.service.name}")
+    @Value("${spring.application.name}")
     private String currentServiceName;
 
     private PrivateKey privateKey;
@@ -34,7 +34,8 @@ public class InternalTokenGenerator {
     public void init() {
 
         try {
-            privateKey = parsePrivateKey(privateKeyPem);
+            privateKey = parsePrivateKey(internalPrivateKeyPem);
+
         } catch (Exception e) {
             throw new IllegalStateException("Failed to initialize JWT Service", e);
         }
@@ -56,9 +57,9 @@ public class InternalTokenGenerator {
                     .claim("scopes", service.getScopes())
                     .claim("aud", targetService);
 
+
         } else if (principal instanceof UserPrincipal user) {
-            builder.claim("userId", user.sub())
-                    .claim("email", user.getEmail())
+            builder.claim("email", user.getEmail())
                     .claim("role", user.getRole())
                     .claim("permissions", user.getPermissions())
                     .claim("tenantId", user.tenantId())

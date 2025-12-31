@@ -2,6 +2,11 @@ server:
   port: 8080
 
 spring:
+#  autoconfigure:
+#    exclude-name:
+#      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+#      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+
   main:
     web-application-type: reactive
   application:
@@ -13,22 +18,35 @@ spring:
           uri: lb://AUTH-SERVICE
           predicates:
             - Path=/api/auth/**
-        # - id: tenant-service
-        #   uri: lb://TENANT-SERVICE
-        #   predicates:
-        #     - Path=/tenant/**
+        - id: user-management-service
+          uri: lb://USER-MANAGEMENT-SERVICE
+          predicates:
+            - Path=/users/**,/internal/users/**
         # - id: appointment-service
         #   uri: lb://APPOINTMENT-SERVICE
         #   predicates:
         #     - Path=/appointment/**
 
+
+
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
 
 security:
   jwt:
     public-key-pem: ${JWT_PUBLIC_KEY}
+
+app:
+  jwt:
     internal-private-key-pem: ${INTERNAL_JWT_PRIVATE_KEY}
     internal-public-key-pem: ${INTERNAL_JWT_PUBLIC_KEY}
+
+logging:
+  level:
+    root: INFO
+    com.clinic.gatewayservice: DEBUG

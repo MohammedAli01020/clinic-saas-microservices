@@ -36,11 +36,11 @@
             <artifactId>jakarta.validation-api</artifactId>
         </dependency>
 
-        <!-- JPA annotations -->
-        <dependency>
-            <groupId>jakarta.persistence</groupId>
-            <artifactId>jakarta.persistence-api</artifactId>
-        </dependency>
+<!--        &lt;!&ndash; JPA annotations &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>jakarta.persistence</groupId>-->
+<!--            <artifactId>jakarta.persistence-api</artifactId>-->
+<!--        </dependency>-->
 
         <!-- jjwt (for JWT parsing & building helper utilities) -->
         <dependency>
@@ -96,10 +96,10 @@
 <!--            <artifactId>tomcat-embed-core</artifactId>-->
 <!--        </dependency>-->
 
-        <dependency>
-            <groupId>org.hibernate.orm</groupId>
-            <artifactId>hibernate-core</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.hibernate.orm</groupId>-->
+<!--            <artifactId>hibernate-core</artifactId>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>com.auth0</groupId>

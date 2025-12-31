@@ -1,9 +1,9 @@
 
-spring:
-  application:
-    name: shared-security
-
-app:
-  jwt:
-    internal-private-key-pem: ${INTERNAL_JWT_PRIVATE_KEY}
-    internal-public-key-pem: ${INTERNAL_JWT_PUBLIC_KEY}
+#spring:
+#  application:
+#    name: shared-security
+#
+#app:
+#  jwt:
+#    internal-private-key-pem: ${INTERNAL_JWT_PRIVATE_KEY}
+#    internal-public-key-pem: ${INTERNAL_JWT_PUBLIC_KEY}

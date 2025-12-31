@@ -1,15 +1,11 @@
-package com.clinic.usermanagementservice.dto;
+package com.clinic.authservice.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.*;
+import lombok.Value;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Value
 public class CreateUserRequest {
     @NotNull(message = "Email is required")
     @Email(message = "Email should be valid")
@@ -22,10 +18,8 @@ public class CreateUserRequest {
     @NotNull(message = "Role is required")
     private String roleName;
 
-    @NotNull
+
     private String tenantId;
 
-    @NotNull
     private Long authUserId;
-
 }

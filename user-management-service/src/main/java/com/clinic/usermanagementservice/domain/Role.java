@@ -3,6 +3,7 @@ package com.clinic.usermanagementservice.domain;
 import com.clinic.sharedlib.audit.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Filter;
 
 import java.util.HashSet;

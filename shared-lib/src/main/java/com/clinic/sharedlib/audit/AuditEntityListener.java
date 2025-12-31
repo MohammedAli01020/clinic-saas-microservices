@@ -1,6 +1,7 @@
 package com.clinic.sharedlib.audit;
 
-import com.clinic.sharedsecurityjwt.CurrentUser;
+import com.clinic.sharedsecurityjwt.PrincipalType;
+import com.clinic.sharedsecurityjwt.SecurityPrincipal;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import lombok.extern.slf4j.Slf4j;
@@ -23,28 +24,36 @@ public class AuditEntityListener {
     }
 
     private void setAuditFields(BaseEntity entity, boolean isNew) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String userId = "system";
-//        String tenantId = "system";
-
-        if (auth != null && auth.getPrincipal() instanceof CurrentUser user) {
-            if (user.serviceAccount()) {
-                // internal call
-                userId = "system"; // أو user.userId() لو تحب تسجيل الـ service account
-            } else {
-                // actual user
-                userId = user.userId();
-            }
-        } else {
-            log.warn("No authenticated principal found, defaulting to 'system'");
-        }
+        String actor = resolveActor();
+        Instant now = Instant.now();
 
         if (isNew) {
-            entity.setCreatedBy(userId);
-            entity.setCreatedAt(Instant.now());
+            entity.setCreatedBy(actor);
+            entity.setCreatedAt(now);
         }
 
-        entity.setUpdatedBy(userId);
-        entity.setUpdatedAt(Instant.now());
+        entity.setUpdatedBy(actor);
+        entity.setUpdatedAt(now);
+    }
+
+
+    private String resolveActor() {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !(auth.getPrincipal() instanceof SecurityPrincipal principal)) {
+            log.debug("No authenticated principal found, using system");
+            return "system";
+        }
+
+        if (principal.principalType() == PrincipalType.USER) {
+            return principal.sub();
+        }
+
+        if (principal.principalType() == PrincipalType.SERVICE) {
+            return "service:" + principal.sub();
+        }
+
+        return "system";
     }
 }

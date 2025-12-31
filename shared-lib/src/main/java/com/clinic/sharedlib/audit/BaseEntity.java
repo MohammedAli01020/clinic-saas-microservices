@@ -16,7 +16,7 @@ import java.time.Instant;
 @EntityListeners(AuditEntityListener.class)
 @FilterDef(name = "tenantFilter", parameters = @ParamDef(name = "tenantId", type = String.class))
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
-@Filter(name = "deletedFilter", condition = "deleted = false")
+//@Filter(name = "deletedFilter", condition = "deleted = false")
 @Getter
 @Setter
 @NoArgsConstructor

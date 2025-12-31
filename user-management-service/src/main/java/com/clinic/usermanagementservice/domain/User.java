@@ -35,8 +35,11 @@ public class User extends BaseEntity {
     @JoinColumn(name = "role_id")
     private Role role;
 
+
+
     public void softDelete() {
         this.status = UserStatus.DELETED;
         this.setDeleted(true);
+
     }
 }

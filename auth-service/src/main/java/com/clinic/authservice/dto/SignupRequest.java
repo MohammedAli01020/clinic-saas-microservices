@@ -16,4 +16,6 @@ public class SignupRequest {
     @NotBlank
     private String tenantId;
 
+    private String fullName;
+
 }

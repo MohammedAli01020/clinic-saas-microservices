@@ -65,7 +65,8 @@ public class JwtUtils {
                     .parseClaimsJws(token);
             return true;
         } catch (JwtException ex) {
-            return false;
+
+            throw new RuntimeException("validateJwtToken " + ex.getMessage());
         }
 
     }
@@ -107,7 +108,7 @@ public class JwtUtils {
         Claims claims = parsed.getBody();
 
         return UserPrincipal.builder()
-                .sub(claims.get("userId", String.class))
+                .sub(claims.getSubject())
                 .iss(claims.getIssuer())
                 .email(claims.get("email", String.class))
                 .tenantId(claims.get("tenantId", String.class))

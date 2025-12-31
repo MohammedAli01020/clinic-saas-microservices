@@ -5,6 +5,7 @@ import com.clinic.authservice.dto.LoginRequest;
 import com.clinic.authservice.dto.SignupRequest;
 import com.clinic.authservice.security.JwtService;
 import com.clinic.authservice.service.AuthService;
+import com.clinic.authservice.service.OnboardingService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +23,19 @@ public class AuthController {
     private final AuthService authService;
     private final JwtService jwtService;
     private final long refreshMaxAgeSec = Duration.ofDays(30).getSeconds();
+    private final OnboardingService onboardingService;
 
     @PostMapping("/signup")
     public ResponseEntity<Map<String, Object>> signup(@RequestBody SignupRequest req) {
-        authService.signup(req);
+
+        onboardingService.onboardTenantAdmin(req.getEmail(),
+                req.getPassword(), req.getFullName(), req.getTenantId());
+
+//        authService.signup(req);
+
         return ResponseEntity.accepted().body(Map.of(
                 "status", "success",
-                "message", "Signup successful, please verify your email"
+                "message", "Signup successful"
         ));
     }
 

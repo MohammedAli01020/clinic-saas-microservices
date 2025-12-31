@@ -1,17 +1,22 @@
 package com.clinic.authservice.service;
 
 
+import com.clinic.authservice.client.UserManagementClient;
 import com.clinic.authservice.domain.RefreshToken;
 
 import com.clinic.authservice.dto.LoginRequest;
 import com.clinic.authservice.dto.LoginResponse;
 import com.clinic.authservice.dto.SignupRequest;
+import com.clinic.authservice.dto.UserRolesPermissionsDto;
 import com.clinic.authservice.repository.AuthUserRepository;
 import com.clinic.authservice.repository.RefreshTokenRepository;
 
 import com.clinic.authservice.security.JwtService;
 
 import com.clinic.authservice.utils.GoogleUserInfo;
+import com.clinic.sharedinternaltokengen.InternalTokenGenerator;
+import com.clinic.sharedsecurityjwt.PrincipalType;
+import com.clinic.sharedsecurityjwt.ServicePrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,6 +36,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +48,9 @@ public class AuthService {
     private final AuthenticationManager authManager;
     private final JwtService jwtService;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    private final InternalTokenGenerator internalTokenGenerator;
+    private final UserManagementClient userManagementClient;
 
 
     // ----------------------
@@ -80,16 +89,30 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
 
-        // Extract permissions from UserManagement or default empty
-        List<String> permissions = List.of(); // placeholder
-        String role = "USER";
+        String internalToken = internalTokenGenerator.generate(
+                "user-management-service",
+                ServicePrincipal.builder()
+                        .sub("auth-service")
+                        .principalType(PrincipalType.SERVICE)
+                        .scopes(Set.of("USER_READ"))
+                        .tenantId(user.getTenantId())
+                        .build()
+        );
+
+
+        // 2️⃣ Call User Management
+        UserRolesPermissionsDto rp =
+                userManagementClient.getRolesPermissions(
+                        user.getId().toString(),
+                        internalToken
+                );
 
         String access = jwtService.generateAccessToken(
                 user.getId().toString(),
                 user.getTenantId(),
                 user.isEnabled(),
-                role,        // placeholder role
-                permissions
+                rp.role(),
+                rp.permissions()
         );
 
         String refresh = jwtService.generateRefreshToken(user.getId().toString());
@@ -140,8 +163,9 @@ public class AuthService {
         if (stored.isRevoked() || stored.getExpiresAt().isBefore(Instant.now()))
             throw new IllegalArgumentException("Refresh expired or revoked");
 
+        // todo here
         AuthUser user = stored.getUser();
-        List<String> permissions = List.of(); // placeholder
+        Set<String> permissions = Set.of(); // placeholder
 
         String access = jwtService.generateAccessToken(
                 user.getId().toString(),

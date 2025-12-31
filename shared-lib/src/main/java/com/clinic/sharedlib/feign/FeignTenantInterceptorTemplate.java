@@ -1,7 +1,6 @@
 package com.clinic.sharedlib.feign;
 
 
-import com.clinic.sharedlib.tenant.TenantContext;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
 import org.springframework.security.core.Authentication;
@@ -19,14 +18,14 @@ public class FeignTenantInterceptorTemplate implements RequestInterceptor {
 
     @Override
     public void apply(RequestTemplate template) {
-        String tenant = TenantContext.getTenantId();
-        if (tenant != null && !tenant.isBlank())
-            template.header("X-TENANT-ID", tenant);
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getCredentials() instanceof String) {
-            String token = (String) auth.getCredentials();
-            if (token != null && !token.isBlank()) template.header("Authorization", "Bearer " + token);
-        }
+//        String tenant = TenantContext.getTenantId();
+//        if (tenant != null && !tenant.isBlank())
+//            template.header("X-TENANT-ID", tenant);
+//
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//        if (auth != null && auth.getCredentials() instanceof String) {
+//            String token = (String) auth.getCredentials();
+//            if (token != null && !token.isBlank()) template.header("Authorization", "Bearer " + token);
+//        }
     }
 }
