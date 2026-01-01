@@ -109,10 +109,12 @@ public class AuthService {
 
         String access = jwtService.generateAccessToken(
                 user.getId().toString(),
+                user.getEmail(),
                 user.getTenantId(),
                 user.isEnabled(),
                 rp.role(),
                 rp.permissions()
+
         );
 
         String refresh = jwtService.generateRefreshToken(user.getId().toString());
@@ -169,6 +171,7 @@ public class AuthService {
 
         String access = jwtService.generateAccessToken(
                 user.getId().toString(),
+                user.getEmail(),
                 user.getTenantId(),
                 user.isEnabled(),
                 "USER",

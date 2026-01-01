@@ -44,10 +44,10 @@ public class JwtUtils {
 
     public Jws<Claims> parseWithPublicKey(String token) {
 
-        return Jwts.parserBuilder()
-                .setSigningKey(publicKey)
+        return Jwts.parser()
+                .verifyWith(publicKey)
                 .build()
-                .parseClaimsJws(token);
+                .parseSignedClaims(token);
 
     }
 
@@ -59,10 +59,10 @@ public class JwtUtils {
 
     public boolean validateJwtToken(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(publicKey)
+            Jwts.parser()
+                    .verifyWith(publicKey)
                     .build()
-                    .parseClaimsJws(token);
+                    .parseSignedClaims(token);
             return true;
         } catch (JwtException ex) {
 

@@ -77,17 +77,17 @@ public class InternalTokenVerifier {
         if (PrincipalType.SERVICE.name().equals(type)) {
 
             // ───────────────── audience (FIX) ─────────────────
-            String aud = claims.get("aud", String.class);
+            Object audClaim = claims.get("aud");
 
-//            String aud;
-//
-//            if (audClaim instanceof String s) {
-//                aud = s;
-//            } else if (audClaim instanceof Collection<?> c && !c.isEmpty()) {
-//                aud = c.iterator().next().toString();
-//            } else {
-//                throw new SecurityException("Invalid audience claim");
-//            }
+            String aud;
+
+            if (audClaim instanceof String s) {
+                aud = s;
+            } else if (audClaim instanceof Collection<?> c && !c.isEmpty()) {
+                aud = c.iterator().next().toString();
+            } else {
+                throw new SecurityException("Invalid audience claim");
+            }
 
             if (aud != null && !aud.equals(currentServiceName)) {
                 throw new SecurityException("Token audience mismatch for service: " + currentServiceName);

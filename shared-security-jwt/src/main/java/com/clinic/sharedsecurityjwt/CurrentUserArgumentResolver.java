@@ -17,17 +17,24 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return parameter.getParameterAnnotation(CurrentUser.class) != null
-                && parameter.getParameterType().equals(CurrentUser.class);
+        return parameter.hasParameterAnnotation(CurrentUser.class)
+                && SecurityPrincipal.class.isAssignableFrom(parameter.getParameterType());
     }
 
     @Override
-    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
-                                  NativeWebRequest webRequest, org.springframework.web.bind.support.WebDataBinderFactory binderFactory) {
+    public Object resolveArgument(
+            MethodParameter parameter,
+            ModelAndViewContainer mavContainer,
+            NativeWebRequest webRequest,
+            org.springframework.web.bind.support.WebDataBinderFactory binderFactory
+    ) {
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof CurrentUser user) {
+
+        if (auth != null && auth.getPrincipal() instanceof SecurityPrincipal user) {
             return user;
         }
-        throw new IllegalStateException("No authenticated user found");
+
+        throw new IllegalStateException("No authenticated user found in SecurityContext");
     }
 }

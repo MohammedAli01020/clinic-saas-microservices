@@ -50,6 +50,7 @@ public class JwtService {
 
     public String generateAccessToken(
             String subjectId,
+            String email,
             String tenantId,
             Boolean isEnabled,
             String role,
@@ -62,6 +63,8 @@ public class JwtService {
                 .withIssuedAt(Date.from(now))
                 .withExpiresAt(Date.from(now.plusSeconds(accessExpMinutes * 60)))
                 .withClaim("tenantId", tenantId)
+                .withClaim("email", email)
+
                 .withClaim("role", role)
                 .withClaim("isEnabled", isEnabled)
                 .withClaim("permissions", permissions.stream().toList())
