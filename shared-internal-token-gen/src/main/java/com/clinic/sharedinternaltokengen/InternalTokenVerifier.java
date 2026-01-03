@@ -70,28 +70,28 @@ public class InternalTokenVerifier {
             throw new SecurityException("Missing token type");
         }
 
+        // ───────────────── audience (FIX) ─────────────────
+        Set<String> aud = extractSet(claims.getAudience());
 
+//        String aud;
+//
+//        if (audClaim instanceof String s) {
+//            aud = s;
+//        } else if (audClaim instanceof Collection<?> c && !c.isEmpty()) {
+//            aud = c.iterator().next().toString();
+//        } else {
+//            throw new SecurityException("Invalid audience claim");
+//        }
+//
+        if (!aud.contains(currentServiceName)) {
+            throw new SecurityException("Token audience mismatch for service: " + currentServiceName);
+        }
 
 
         // ───────────────── SERVICE token ─────────────────
         if (PrincipalType.SERVICE.name().equals(type)) {
 
-            // ───────────────── audience (FIX) ─────────────────
-            Object audClaim = claims.get("aud");
 
-            String aud;
-
-            if (audClaim instanceof String s) {
-                aud = s;
-            } else if (audClaim instanceof Collection<?> c && !c.isEmpty()) {
-                aud = c.iterator().next().toString();
-            } else {
-                throw new SecurityException("Invalid audience claim");
-            }
-
-            if (aud != null && !aud.equals(currentServiceName)) {
-                throw new SecurityException("Token audience mismatch for service: " + currentServiceName);
-            }
 
             return ServicePrincipal.builder()
                     .sub(claims.getSubject())
@@ -111,6 +111,7 @@ public class InternalTokenVerifier {
 
             return UserPrincipal.builder()
                     .sub(claims.getSubject())
+                    .aud(aud)
                     .role(claims.get("role", String.class))
                     .permissions(extractSet(claims.get("permissions")))
                     .tenantId(claims.get("tenantId", String.class))

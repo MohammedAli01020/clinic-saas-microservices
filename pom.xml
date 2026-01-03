@@ -32,7 +32,6 @@
         <lombok.version>1.18.26</lombok.version>
     </properties>
 
-
     <modules>
         <module>auth-service</module>
         <module>eureka-server</module>
@@ -40,22 +39,15 @@
         <module>shared-lib</module>
         <module>shared-security</module>
         <module>tenant-service</module>
-
         <module>user-management-service</module>
         <module>shared-security-jwt</module>
         <module>shared-internal-token-gen</module>
-
-
-        <!--        <module>patient-service</module>-->
-<!--        <module>appointment-service</module>-->
     </modules>
-
 
     <dependencyManagement>
         <dependencies>
 
-            <!-- lobmok -->
-
+            <!-- Lombok -->
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
@@ -100,7 +92,7 @@
                 <version>${querydsl.version}</version>
             </dependency>
 
-
+            <!-- MySQL -->
             <dependency>
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
@@ -108,7 +100,7 @@
                 <scope>runtime</scope>
             </dependency>
 
-
+            <!-- JWT -->
             <dependency>
                 <groupId>com.auth0</groupId>
                 <artifactId>java-jwt</artifactId>
@@ -122,7 +114,7 @@
         <pluginManagement>
             <plugins>
 
-                <!-- Compiler -->
+                <!-- Maven Compiler Plugin (Unified for all annotation processors) -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
@@ -130,15 +122,25 @@
                     <configuration>
                         <release>${maven.compiler.release}</release>
                         <annotationProcessorPaths>
+                            <!-- MapStruct -->
                             <path>
                                 <groupId>org.mapstruct</groupId>
                                 <artifactId>mapstruct-processor</artifactId>
                                 <version>${mapstruct.version}</version>
                             </path>
+
+                            <!-- QueryDSL -->
                             <path>
                                 <groupId>com.querydsl</groupId>
                                 <artifactId>querydsl-apt</artifactId>
                                 <version>${querydsl.version}</version>
+                            </path>
+
+                            <!-- Lombok -->
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
                             </path>
                         </annotationProcessorPaths>
                     </configuration>
@@ -149,23 +151,6 @@
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <version>${spring.boot.version}</version>
-                </plugin>
-
-
-
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.11.0</version> <!-- Or higher -->
-                    <configuration>
-                        <annotationProcessorPaths>
-                            <path>
-                                <groupId>org.projectlombok</groupId>
-                                <artifactId>lombok</artifactId>
-                                <version>1.18.30</version> <!-- Use the latest version -->
-                            </path>
-                        </annotationProcessorPaths>
-                    </configuration>
                 </plugin>
 
             </plugins>

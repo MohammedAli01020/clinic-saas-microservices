@@ -13,8 +13,7 @@ import org.springframework.stereotype.Component;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Base64;
-import java.util.Date;
+import java.util.*;
 
 @Component
 public class InternalTokenGenerator {
@@ -50,12 +49,12 @@ public class InternalTokenGenerator {
                 .setIssuer(currentServiceName)
                 .setIssuedAt(now)
                 .setExpiration(exp)
-                .claim("principalType", principal.principalType().name());
+                .claim("principalType", principal.principalType().name())
+                .claim("aud", List.of(targetService));
 
         if (principal instanceof ServicePrincipal service) {
             builder.claim("tenantId", service.tenantId())
-                    .claim("scopes", service.getScopes())
-                    .claim("aud", targetService);
+                    .claim("scopes", service.getScopes());
 
 
         } else if (principal instanceof UserPrincipal user) {

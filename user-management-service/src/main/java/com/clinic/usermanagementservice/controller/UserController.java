@@ -27,15 +27,16 @@ public class UserController {
     @GetMapping
     @PreAuthorize("hasAuthority('USER_VIEW')")
     public Page<UserResponse> search(
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) String fullName,
-            @RequestParam(required = false) UserStatus status,
+            @RequestParam(name = "email", required = false) String email,
+            @RequestParam(name = "fullName", required = false) String fullName,
+            @RequestParam(name = "status", required = false) UserStatus status,
             Pageable pageable
     ) {
         return userService.searchUsers(email, fullName, status, pageable);
     }
 
     @GetMapping("/me")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
     public UserResponse getCurrentUser(@CurrentUser UserPrincipal currentUser) {
         return userService.getCurrentUser(currentUser);
     }

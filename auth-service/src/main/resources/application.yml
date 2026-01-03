@@ -48,7 +48,7 @@ eureka:
 app:
   jwt:
     issuer: clinic-auth
-    access-exp-minutes: ${JWT_ACCESS_MIN:15}
+    access-exp-minutes: ${JWT_ACCESS_MIN:60}
     refresh-exp-days: ${JWT_REFRESH_DAYS:30}
     private-key-pem: ${JWT_PRIVATE_KEY}
     internal-private-key-pem: ${INTERNAL_JWT_PRIVATE_KEY}

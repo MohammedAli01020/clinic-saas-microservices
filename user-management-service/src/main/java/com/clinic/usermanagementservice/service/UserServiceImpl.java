@@ -8,12 +8,9 @@ import com.clinic.usermanagementservice.dto.CreateUserRequest;
 import com.clinic.usermanagementservice.dto.RolePermissionRow;
 import com.clinic.usermanagementservice.dto.RolesPermissionsResponse;
 import com.clinic.usermanagementservice.dto.UserResponse;
-import com.clinic.usermanagementservice.mapper.UserMapper;
 import com.clinic.usermanagementservice.repository.RoleRepository;
 import com.clinic.usermanagementservice.repository.UserRepository;
 import com.clinic.usermanagementservice.specification.UserSpecification;
-import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +28,6 @@ public class UserServiceImpl implements UserService{
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-//    private final UserMapper userMapper;
 
     /**
      * Create user linked to authUser and tenant.
@@ -43,7 +39,6 @@ public class UserServiceImpl implements UserService{
     @Transactional
     public UserResponse createUser(CreateUserRequest request) {
         // 1️⃣ Map DTO to User entity
-//        User user = userMapper.toUser(request);
 
         if (userRepository.existsByTenantIdAndEmail(request.getTenantId(), request.getEmail())) {
             throw new IllegalArgumentException(
@@ -69,11 +64,6 @@ public class UserServiceImpl implements UserService{
         // 4️⃣ Save user
         User savedUser = userRepository.save(user);
 
-//        private Long id;
-//        private String email;
-//        private String fullName;
-//        private String status;
-//        private String roleName;
 
         UserResponse response = UserResponse.builder()
              .id(savedUser.getId())
@@ -83,13 +73,11 @@ public class UserServiceImpl implements UserService{
                 .roleName(savedUser.getRole().getName()).build();
 
 
-        // 5️⃣ Map to response DTO
-//        return userMapper.toUserResponse(savedUser);
-
         return response;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<UserResponse> searchUsers(String email, String fullName, UserStatus status, Pageable pageable) {
         Specification<User> spec = UserSpecification.filterBy(email, fullName, status);
         return userRepository.findAll(spec, pageable)
