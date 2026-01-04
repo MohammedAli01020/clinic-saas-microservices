@@ -9,8 +9,9 @@ import java.util.List;
 
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
 
-    Optional<RefreshToken> findByTokenHash(String tokenHash);
 
     List<RefreshToken> findByUserAndRevokedFalse(AuthUser user);
+
+    Optional<RefreshToken> findByTokenHashAndTenantId(String tokenHash, String tenantId);
 
 }

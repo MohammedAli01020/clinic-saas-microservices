@@ -9,7 +9,9 @@ import com.clinic.authservice.service.OnboardingService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
@@ -18,6 +20,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;
@@ -48,21 +51,12 @@ public class AuthController {
         var res = authService.login(req, device, ip);
 
         // set HttpOnly secure refresh cookie
-        ResponseCookie cookie = ResponseCookie.from("refresh_token", res.getRefreshToken())
-                .httpOnly(true)
-                .secure(true)
-                .path("/api/auth")
-                .maxAge(refreshMaxAgeSec)
-                .sameSite("Strict")
-                .build();
-
-        resp.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        resp.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
-        resp.setHeader(HttpHeaders.PRAGMA, "no-cache");
+        setRefreshTokenCookie(resp, res.getRefreshToken());
 
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "accessToken", res.getAccessToken(),
+                "refreshToken", res.getRefreshToken(),
                 "tenantId", res.getTenantId()
         ));
     }
@@ -77,34 +71,31 @@ public class AuthController {
             ));
         }
 
-        var decoded = jwtService.verify(refreshCookie);
-        if (!"refresh".equals(decoded.getClaim("type").asString())) {
+        try {
+            var res = authService.refresh(refreshCookie);
+            setRefreshTokenCookie(resp, res.getRefreshToken());
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "success",
+                    "accessToken", res.getAccessToken(),
+                    "refreshToken", res.getRefreshToken(),
+                    "tenantId", res.getTenantId()
+            ));
+        } catch (BadCredentialsException e) {
+            log.warn("Refresh token failed: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "status", "error",
-                    "message", "Invalid token type"
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            log.error("Unexpected error during refresh", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "error",
+                    "message", "Unexpected error"
             ));
         }
-
-        var res = authService.refresh(refreshCookie);
-
-        ResponseCookie cookie = ResponseCookie.from("refresh_token", res.getRefreshToken())
-                .httpOnly(true)
-                .secure(true)
-                .path("/api/auth")
-                .maxAge(refreshMaxAgeSec)
-                .sameSite("Strict")
-                .build();
-
-        resp.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        resp.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
-        resp.setHeader(HttpHeaders.PRAGMA, "no-cache");
-
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "accessToken", res.getAccessToken(),
-                "tenantId", res.getTenantId()
-        ));
     }
+
 
     @PostMapping("/logout")
     public ResponseEntity<Map<String, Object>> logout(@CookieValue(name = "refresh_token", required = false) String refreshCookie,
@@ -112,17 +103,7 @@ public class AuthController {
         if (refreshCookie != null) authService.logout(refreshCookie);
 
         // clear cookie
-        ResponseCookie cookie = ResponseCookie.from("refresh_token", "")
-                .httpOnly(true)
-                .secure(true)
-                .path("/api/auth")
-                .maxAge(0)
-                .sameSite("Strict")
-                .build();
-
-        resp.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        resp.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
-        resp.setHeader(HttpHeaders.PRAGMA, "no-cache");
+        clearRefreshTokenCookie(resp);
 
         return ResponseEntity.ok(Map.of(
                 "status", "success",
@@ -145,6 +126,41 @@ public class AuthController {
             ));
         }
     }
+
+
+    private void setRefreshTokenCookie(HttpServletResponse resp, String refreshToken) {
+        ResponseCookie cookie = ResponseCookie.from("refresh_token", refreshToken)
+                .httpOnly(true)
+                .secure(false)
+                .path("/api/auth")
+                .maxAge(refreshMaxAgeSec)
+                .sameSite("Lax")
+//                .sameSite("Strict")
+
+                // TODO in the prod mode change to sameSite("Strict") and secure(true)
+                .build();
+
+        resp.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        resp.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
+        resp.setHeader(HttpHeaders.PRAGMA, "no-cache");
+    }
+
+
+    private void clearRefreshTokenCookie(HttpServletResponse resp) {
+        ResponseCookie cookie = ResponseCookie.from("refresh_token", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/api/auth")
+                .maxAge(0)
+                .sameSite("Strict")
+
+                .build();
+
+        resp.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        resp.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
+        resp.setHeader(HttpHeaders.PRAGMA, "no-cache");
+    }
+
 
 
 }

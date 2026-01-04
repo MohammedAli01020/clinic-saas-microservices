@@ -9,7 +9,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
         "com.clinic.authservice",     // الباكج الرئيسي
         "com.clinic.sharedinternaltokengen",
 //        "com.clinic.sharedlib.jwt",    // الباكج اللي فيه JwtUtils
-//        "com.clinic.sharedsecurity"
+        "com.clinic.sharedsecurity"
 })
 @EnableDiscoveryClient
 @EnableFeignClients(basePackages = "com.clinic.authservice.client")

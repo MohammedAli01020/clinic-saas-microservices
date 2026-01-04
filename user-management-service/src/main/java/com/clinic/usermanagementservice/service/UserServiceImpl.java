@@ -84,9 +84,13 @@ public class UserServiceImpl implements UserService{
                 .map(this::mapToResponse);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public UserResponse getCurrentUser(UserPrincipal currentUser) {
-        User user = userRepository.findByAuthUserIdAndTenantId(Long.valueOf(currentUser.getSub()), currentUser.tenantId())
+//        User user = userRepository.findByAuthUserIdAndTenantId(Long.valueOf(currentUser.getSub()), currentUser.tenantId())
+//                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        User user = userRepository.findByAuthUserId(Long.valueOf(currentUser.getSub()))
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return mapToResponse(user);
     }

@@ -10,11 +10,11 @@ import org.springframework.stereotype.Component;
 
 import java.security.*;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.security.spec.*;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 @Component
@@ -23,6 +23,9 @@ public class JwtService {
 
     @Value("${app.jwt.private-key-pem}")
     private String privateKeyPem;
+
+    @Value("${app.jwt.public-key-pem}")
+    private String publicKeyPem;
 
     @Value("${app.jwt.issuer:clinic-auth}")
     private String issuer;
@@ -40,8 +43,9 @@ public class JwtService {
 
         try {
             PrivateKey privateKey = parsePrivateKey(privateKeyPem);
+            PublicKey publicKey =  parsePublicKey(publicKeyPem);
 
-            this.algorithm = Algorithm.RSA256(null, (RSAPrivateKey) privateKey);
+            this.algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, (RSAPrivateKey) privateKey);
             log.info("JWT Service initialized using RSA");
         } catch (Exception e) {
             throw new IllegalStateException("Failed to initialize JWT Service", e);
@@ -86,11 +90,13 @@ public class JwtService {
     }
 
 
-    public String generateRefreshToken(String subjectId) {
+    public String generateRefreshToken(String subjectId, String tenantId) {
         Instant now = Instant.now();
         return JWT.create()
                 .withIssuer(issuer)
                 .withSubject(subjectId)
+                .withClaim("tenantId", tenantId)
+
                 .withClaim("tokenType", "refresh")
                 .withIssuedAt(Date.from(now))
                 .withExpiresAt(Date.from(now.plusSeconds(refreshExpDays * 86400)))

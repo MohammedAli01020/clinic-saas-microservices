@@ -1,45 +1,38 @@
 package com.clinic.authservice.service;
 
-
 import com.clinic.authservice.client.UserManagementClient;
+import com.clinic.authservice.domain.AuthUser;
 import com.clinic.authservice.domain.RefreshToken;
-
 import com.clinic.authservice.dto.LoginRequest;
 import com.clinic.authservice.dto.LoginResponse;
 import com.clinic.authservice.dto.SignupRequest;
 import com.clinic.authservice.dto.UserRolesPermissionsDto;
 import com.clinic.authservice.repository.AuthUserRepository;
 import com.clinic.authservice.repository.RefreshTokenRepository;
-
 import com.clinic.authservice.security.JwtService;
-
 import com.clinic.authservice.utils.GoogleUserInfo;
 import com.clinic.sharedinternaltokengen.InternalTokenGenerator;
 import com.clinic.sharedsecurityjwt.PrincipalType;
 import com.clinic.sharedsecurityjwt.ServicePrincipal;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-
-import java.security.MessageDigest;
-
-
-import com.clinic.authservice.domain.AuthUser;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-
-import java.util.List;
 import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private final AuthUserRepository userRepo;
@@ -52,102 +45,52 @@ public class AuthService {
     private final InternalTokenGenerator internalTokenGenerator;
     private final UserManagementClient userManagementClient;
 
-
     // ----------------------
     // Signup (Local User)
     // ----------------------
     @Transactional
     public void signup(SignupRequest req) {
-        if (userRepo.findByEmail(req.getEmail()).isPresent())
-            throw new IllegalArgumentException("Email used");
+        if (userRepo.findByEmail(req.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email already used");
+        }
 
-//        AuthUser u = AuthUser.builder()
-//                .email(req.getEmail())
-//                .passwordHash(passwordEncoder.encode(req.getPassword()))
-//                .tenantId(req.getTenantId())
-//                .enabled(false)
-//                .emailVerified(false)
-//                .build();
+        // Uncomment to enable user creation & email verification
+        /*
+        AuthUser u = AuthUser.builder()
+                .email(req.getEmail())
+                .passwordHash(passwordEncoder.encode(req.getPassword()))
+                .tenantId(req.getTenantId())
+                .enabled(false)
+                .emailVerified(false)
+                .build();
+        userRepo.save(u);
 
-//        userRepo.save(u);
-//
-//        // Generate email verification token
-//        String token = jwtService.generateEmailVerificationToken(u.getId().toString());
+        String token = jwtService.generateEmailVerificationToken(u.getId().toString());
         // TODO: send token via Kafka/email
+        */
     }
 
     // ----------------------
     // Login (Local)
     // ----------------------
+    @Transactional
     public LoginResponse login(LoginRequest req, String device, String ip) {
-
         authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
         );
 
         AuthUser user = userRepo.findByEmail(req.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new BadCredentialsException("User not found"));
 
+        UserRolesPermissionsDto rp = fetchUserRolesPermissions(user);
+        String access = generateAccessToken(user, rp);
 
-        String internalToken = internalTokenGenerator.generate(
-                "user-management-service",
-                ServicePrincipal.builder()
-                        .sub("auth-service")
-                        .principalType(PrincipalType.SERVICE)
-                        .scopes(Set.of("USER_READ"))
-                        .tenantId(user.getTenantId())
-                        .build()
-        );
-
-
-        // 2️⃣ Call User Management
-        UserRolesPermissionsDto rp =
-                userManagementClient.getRolesPermissions(
-                        user.getId().toString(),
-                        internalToken
-                );
-
-        String access = jwtService.generateAccessToken(
-                user.getId().toString(),
-                user.getEmail(),
-                user.getTenantId(),
-                user.isEnabled(),
-                rp.role(),
-                rp.permissions()
-
-        );
-
-        String refresh = jwtService.generateRefreshToken(user.getId().toString());
+        String refresh = jwtService.generateRefreshToken(user.getId().toString(), user.getTenantId());
         saveRefreshToken(user, refresh, device, ip);
 
         return new LoginResponse(access, refresh, user.getTenantId());
     }
 
-    // ----------------------
-    // Login (Google)
-    // ----------------------
-//    @Transactional
-//    public LoginResponse socialLogin(SocialLoginRequest req, String device, String ip) {
-//        // Verify Google token
-//        var info = jwtService.verifyGoogleToken(req.getIdToken());
-//
-//        AuthUser user = userRepo.findByEmail(info.getEmail())
-//                .orElseGet(() -> createGoogleUser(info));
-//
-//        List<String> permissions = List.of(); // placeholder
-//
-//        String access = jwtService.generateAccessToken(
-//                user.getId().toString(),
-//                user.getTenantId(),
-//                "USER",  // placeholder role
-//                permissions
-//        );
-//
-//        String refresh = jwtService.generateRefreshToken(user.getId().toString());
-//        saveRefreshToken(user, refresh, device, ip);
-//
-//        return new LoginResponse(access, refresh, user.getTenantId());
-//    }
 
     // ----------------------
     // Refresh Token
@@ -155,38 +98,35 @@ public class AuthService {
     @Transactional
     public LoginResponse refresh(String refreshTokenRaw) {
         var decoded = jwtService.verify(refreshTokenRaw);
-        if (!"refresh".equals(decoded.getClaim("type").asString()))
-            throw new IllegalArgumentException("Not a refresh token");
 
+        log.info("decoded: " + decoded.getClaims().toString());
+        if (!"refresh".equals(decoded.getClaim("tokenType").asString())) {
+            throw new BadCredentialsException("Invalid token type");
+        }
+
+        String tenantId = decoded.getClaim("tenantId").asString();
         String hash = sha256(refreshTokenRaw);
-        RefreshToken stored = refreshRepo.findByTokenHash(hash)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid refresh token"));
 
-        if (stored.isRevoked() || stored.getExpiresAt().isBefore(Instant.now()))
-            throw new IllegalArgumentException("Refresh expired or revoked");
+        RefreshToken stored = refreshRepo.findByTokenHashAndTenantId(hash, tenantId)
+                .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
 
-        // todo here
-        AuthUser user = stored.getUser();
-        Set<String> permissions = Set.of(); // placeholder
+        if (stored.isRevoked() || stored.getExpiresAt().isBefore(Instant.now())) {
+            throw new BadCredentialsException("Refresh token expired or revoked");
+        }
 
-        String access = jwtService.generateAccessToken(
-                user.getId().toString(),
-                user.getEmail(),
-                user.getTenantId(),
-                user.isEnabled(),
-                "USER",
-                permissions
-        );
-
-        // Rotate refresh token
         stored.setRevoked(true);
         refreshRepo.save(stored);
 
-        String newRefresh = jwtService.generateRefreshToken(user.getId().toString());
+        AuthUser user = stored.getUser();
+        UserRolesPermissionsDto rp = fetchUserRolesPermissions(user);
+        String access = generateAccessToken(user, rp);
+
+        String newRefresh = jwtService.generateRefreshToken(user.getId().toString(), user.getTenantId());
         saveRefreshToken(user, newRefresh, stored.getDevice(), stored.getIp());
 
         return new LoginResponse(access, newRefresh, user.getTenantId());
     }
+
 
     // ----------------------
     // Logout
@@ -194,10 +134,11 @@ public class AuthService {
     @Transactional
     public void logout(String refreshTokenRaw) {
         String hash = sha256(refreshTokenRaw);
-        refreshRepo.findByTokenHash(hash).ifPresent(rt -> {
-            rt.setRevoked(true);
-            refreshRepo.save(rt);
-        });
+        var decoded = jwtService.verify(refreshTokenRaw);
+        String tenantId = decoded.getClaim("tenantId").asString();
+
+        refreshRepo.findByTokenHashAndTenantId(hash, tenantId)
+                .ifPresent(rt -> rt.setRevoked(true));
     }
 
     // ----------------------
@@ -207,8 +148,9 @@ public class AuthService {
     public boolean verifyEmail(String token) {
         try {
             var decoded = jwtService.verify(token);
-            if (!"email_verification".equals(decoded.getClaim("type").asString()))
-                throw new IllegalArgumentException("Invalid token type");
+            if (!"email_verification".equals(decoded.getClaim("tokenType").asString())) {
+                throw new BadCredentialsException("Invalid token type");
+            }
 
             String userId = decoded.getSubject();
             AuthUser u = userRepo.findById(Long.valueOf(userId))
@@ -238,15 +180,17 @@ public class AuthService {
 
     private void saveRefreshToken(AuthUser user, String refresh, String device, String ip) {
         String hash = sha256(refresh);
+
         RefreshToken rt = RefreshToken.builder()
                 .tokenHash(hash)
                 .user(user)
+                .tenantId(user.getTenantId())
                 .device(device)
                 .ip(ip)
-                .createdAt(Instant.now())
                 .expiresAt(Instant.now().plusSeconds(jwtService.getRefreshExpirySeconds()))
                 .revoked(false)
                 .build();
+
         refreshRepo.save(rt);
     }
 
@@ -260,10 +204,31 @@ public class AuthService {
         }
     }
 
+    private UserRolesPermissionsDto fetchUserRolesPermissions(AuthUser user) {
+        String internalToken = internalTokenGenerator.generate(
+                "user-management-service",
+                ServicePrincipal.builder()
+                        .sub("auth-service")
+                        .principalType(PrincipalType.SERVICE)
+                        .scopes(Set.of("USER_READ"))
+                        .tenantId(user.getTenantId())
+                        .build()
+        );
+
+        return userManagementClient.getRolesPermissions(
+                user.getId().toString(),
+                internalToken
+        );
+    }
+    private String generateAccessToken(AuthUser user, UserRolesPermissionsDto rp) {
+        return jwtService.generateAccessToken(
+                user.getId().toString(),
+                user.getEmail(),
+                user.getTenantId(),
+                user.isEnabled(),
+                rp.role(),
+                rp.permissions()
+        );
+    }
+
 }
-
-
-
-
-
-

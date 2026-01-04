@@ -3,15 +3,14 @@ package com.clinic.authservice.domain;
 import com.clinic.sharedlib.audit.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+
 import java.time.Instant;
 
 @Entity
 @Table(name = "refresh_tokens")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class RefreshToken {
-
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @SuperBuilder
+public class RefreshToken extends BaseEntity{
 
     @Column(name="token_hash", length=512)
     private String tokenHash;

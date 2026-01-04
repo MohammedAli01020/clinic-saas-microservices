@@ -18,8 +18,11 @@ import java.io.IOException;
 @Slf4j
 public class HibernateTenantFilter extends OncePerRequestFilter {
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    private final EntityManager entityManager;
+
+    public HibernateTenantFilter(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -31,10 +34,13 @@ public class HibernateTenantFilter extends OncePerRequestFilter {
 
         if (authentication != null && authentication.getPrincipal() instanceof SecurityPrincipal user) {
             String tenantId = user.tenantId();
+            log.info("tenantId: " + tenantId);
 
             Session session = entityManager.unwrap(Session.class);
             if (session != null) {
                 session.enableFilter("tenantFilter").setParameter("tenantId", tenantId);
+
+                log.info("session not null tenantFilter enabled ");
 
 //                try {
 //                      session.enableFilter("deletedFilter");
