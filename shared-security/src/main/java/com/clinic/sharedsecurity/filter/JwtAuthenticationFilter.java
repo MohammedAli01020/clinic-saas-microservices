@@ -1,6 +1,7 @@
 package com.clinic.sharedsecurity.filter;
 
 import com.clinic.sharedinternaltokengen.InternalTokenVerifier;
+import com.clinic.sharedsecurity.context.TenantContext;
 import com.clinic.sharedsecurityjwt.SecurityPrincipal;
 import com.clinic.sharedsecurityjwt.ServicePrincipal;
 import com.clinic.sharedsecurityjwt.UserPrincipal;
@@ -59,6 +60,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             // التحقق من صلاحية Internal JWT وتحويله لـ SecurityPrincipal
             SecurityPrincipal principal = verifier.verify(internalToken);
+            TenantContext.setTenantId(principal.tenantId());
 
             // بناء authorities بناء على نوع principal
             List<SimpleGrantedAuthority> authorities;

@@ -25,7 +25,7 @@ public class SecurityConfig {
     private final AuthUserRepository authUserRepository;
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final HibernateTenantFilter hibernateTenantFilter;
+//    private final HibernateTenantFilter hibernateTenantFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationManager authManager) throws Exception {
@@ -35,7 +35,7 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(hibernateTenantFilter, JwtAuthenticationFilter.class)
+//                .addFilterAfter(hibernateTenantFilter, JwtAuthenticationFilter.class)
 
                 .authorizeHttpRequests(auth -> auth
 

@@ -2,7 +2,6 @@ package com.clinic.sharedsecurity.filter;
 
 import com.clinic.sharedsecurityjwt.SecurityPrincipal;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

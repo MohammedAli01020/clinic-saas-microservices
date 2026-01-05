@@ -28,23 +28,25 @@ public class SharedFilterConfig {
     }
 
 
-    @PersistenceContext
-    private EntityManager entityManager;
 
-    @Bean
-    public HibernateTenantFilter hibernateTenantFilterInstance() {
-        return new HibernateTenantFilter(entityManager);
-    }
+//
+//    @PersistenceContext
+//    private EntityManager entityManager;
+//
+//    @Bean
+//    public HibernateTenantFilter hibernateTenantFilterInstance() {
+//        return new HibernateTenantFilter(entityManager);
+//    }
 
 
 
-    @Bean
-    public FilterRegistrationBean<OpenEntityManagerInViewFilter> openEntityManagerInViewFilter() {
-        FilterRegistrationBean<OpenEntityManagerInViewFilter> bean = new FilterRegistrationBean<>();
-        bean.setFilter(new OpenEntityManagerInViewFilter());
-        bean.setOrder(30);
-        return bean;
-    }
+//    @Bean
+//    public FilterRegistrationBean<OpenEntityManagerInViewFilter> openEntityManagerInViewFilter() {
+//        FilterRegistrationBean<OpenEntityManagerInViewFilter> bean = new FilterRegistrationBean<>();
+//        bean.setFilter(new OpenEntityManagerInViewFilter());
+//        bean.setOrder(30);
+//        return bean;
+//    }
 
 
 //    @Bean
